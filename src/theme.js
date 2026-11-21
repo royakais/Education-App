@@ -94,10 +94,11 @@ export const navigationTheme = {
   },
 };
 
-// Header used by every stack/tab/drawer screen that shows one.
+// Header used by detail screens: cream like Home, maroon back arrow and title.
 export const headerOptions = {
-  headerStyle: { backgroundColor: COLORS.maroon },
-  headerTintColor: COLORS.cream,
-  headerTitleStyle: { fontFamily: FONTS.semibold },
+  headerStyle: { backgroundColor: COLORS.cream },
+  headerTintColor: COLORS.maroon,
+  headerTitleStyle: { fontFamily: FONTS.semibold, fontSize: 17, color: COLORS.maroon },
   headerShadowVisible: false,
+  headerBackButtonDisplayMode: 'minimal',
 };

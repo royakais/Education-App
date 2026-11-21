@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Avatar, Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
-import { COLORS } from '../../theme';
+import { COLORS, FONTS } from '../../theme';
 import { authErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
@@ -42,7 +42,7 @@ export default function LoginScreen({ navigation }) {
           color={COLORS.gold}
           style={{ backgroundColor: theme.colors.primary, marginBottom: 16 }}
         />
-        <Text variant="displaySmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+        <Text variant="displaySmall" style={{ color: theme.colors.primary, fontFamily: FONTS.semibold }}>
           Education App
         </Text>
         <View style={styles.accent} />
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: COLORS.cream },
   header: { alignItems: 'center', marginBottom: 32 },
   accent: { width: 48, height: 4, borderRadius: 2, backgroundColor: COLORS.gold, marginTop: 12 },
-  subtitle: { marginTop: 12, color: COLORS.muted },
+  subtitle: { marginTop: 12, color: COLORS.muted, fontFamily: FONTS.regular },
   input: { marginBottom: 12 },
   link: { marginTop: 12 },
 });

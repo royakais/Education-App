@@ -7,7 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { useAssignments } from '../../hooks/useAssignments';
-import { COLORS } from '../../theme';
+import { COLORS, FONTS } from '../../theme';
+import { generateCrn } from '../../utils/crn';
 import { MONTHS, daysUntil, formatShort, relativeDay } from '../../utils/dates';
 
 function Section({ title, icon, delay = 0, children }) {
@@ -48,7 +49,7 @@ export default function CourseDetailsScreen({ route, navigation }) {
       headerRight: () => (
         <IconButton
           icon="pencil-outline"
-          iconColor={COLORS.cream}
+          iconColor={COLORS.maroon}
           onPress={() => navigation.navigate('CourseForm', { course })}
         />
       ),
@@ -57,16 +58,17 @@ export default function CourseDetailsScreen({ route, navigation }) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Hero */}
-      <LinearGradient colors={[COLORS.maroon, COLORS.burgundy]} style={styles.hero}>
+      {/* Floating course card (same style as the Home carousel card) */}
+      <Animated.View entering={FadeInDown.duration(400)} style={styles.heroShadow}>
+      <LinearGradient colors={[COLORS.burgundy, COLORS.maroon]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
         <View style={styles.heroCircle} />
         <View style={styles.codeRow}>
           <View style={[styles.colorDot, { backgroundColor: course.color }]} />
           <Text style={styles.code}>
-            {info.code} · {info.credits} credits
+            {info.code} · CRN {generateCrn(course.id)} · {info.credits} credits
           </Text>
         </View>
-        <Text variant="headlineMedium" style={styles.title}>
+        <Text style={styles.title}>
           {course.title}
         </Text>
         <Text style={styles.instructor}>
@@ -85,6 +87,7 @@ export default function CourseDetailsScreen({ route, navigation }) {
           </View>
         </View>
       </LinearGradient>
+      </Animated.View>
 
       {/* Quick info */}
       <Animated.View entering={FadeInDown.duration(350)} style={styles.tiles}>
@@ -109,7 +112,7 @@ export default function CourseDetailsScreen({ route, navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.itemTitle}>{next.title}</Text>
               <Text style={styles.itemMeta}>{next.description}</Text>
-              <Text style={[styles.itemMeta, { color: COLORS.burgundy, fontWeight: 'bold', marginTop: 6 }]}>
+              <Text style={[styles.itemMeta, { color: COLORS.burgundy, fontFamily: FONTS.semibold, marginTop: 6 }]}>
                 Due {relativeDay(next.dueDate)} · not submitted
               </Text>
             </View>
@@ -204,14 +207,18 @@ export default function CourseDetailsScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.cream },
-  hero: {
-    padding: 20,
-    paddingTop: 8,
-    paddingBottom: 56,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: 'hidden',
+  heroShadow: {
+    marginHorizontal: 18,
+    marginTop: 6,
+    borderRadius: 26,
+    backgroundColor: COLORS.maroon,
+    shadowColor: COLORS.maroon,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
+  hero: { padding: 22, borderRadius: 26, overflow: 'hidden' },
   heroCircle: {
     position: 'absolute',
     width: 220,
@@ -223,33 +230,30 @@ const styles = StyleSheet.create({
   },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   colorDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1, borderColor: COLORS.cream },
-  code: { color: COLORS.gold, fontWeight: 'bold', letterSpacing: 1 },
-  title: { color: COLORS.cream, fontWeight: 'bold', marginTop: 8 },
+  code: { color: COLORS.gold, fontFamily: FONTS.semibold, fontSize: 12, letterSpacing: 1 },
+  title: { color: COLORS.cream, fontFamily: FONTS.semibold, fontSize: 24, lineHeight: 32, marginTop: 8 },
   instructor: { color: 'rgba(251,246,238,0.8)', marginTop: 4 },
   progressBox: { marginTop: 18 },
   progressTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   progressLabel: { color: 'rgba(251,246,238,0.8)', fontSize: 13 },
-  progressValue: { color: COLORS.cream, fontWeight: 'bold', fontSize: 13 },
+  progressValue: { color: COLORS.cream, fontFamily: FONTS.semibold, fontSize: 13 },
   track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(251,246,238,0.2)' },
   fill: { height: 8, borderRadius: 4, backgroundColor: COLORS.gold },
-  tiles: { flexDirection: 'row', gap: 12, marginHorizontal: 20, marginTop: -36 },
+  tiles: { flexDirection: 'row', gap: 12, marginHorizontal: 18, marginTop: 14 },
   tile: {
     flex: 1,
     backgroundColor: COLORS.card,
     borderRadius: 18,
     padding: 14,
     gap: 4,
-    shadowColor: COLORS.maroon,
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.creamDark,
   },
   tileLabel: { color: COLORS.muted, fontSize: 12 },
-  tileValue: { color: COLORS.text, fontWeight: 'bold', fontSize: 13 },
+  tileValue: { color: COLORS.text, fontFamily: FONTS.semibold, fontSize: 13 },
   section: {
-    marginHorizontal: 20,
-    marginTop: 16,
+    marginHorizontal: 18,
+    marginTop: 14,
     padding: 16,
     borderRadius: 20,
     backgroundColor: COLORS.card,
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.creamDark,
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  sectionTitle: { color: COLORS.maroon, fontWeight: 'bold', fontSize: 16 },
+  sectionTitle: { color: COLORS.maroon, fontFamily: FONTS.semibold, fontSize: 16 },
   body: { color: COLORS.text, lineHeight: 21 },
   deadline: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   deadlineDate: {
@@ -268,8 +272,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deadlineDay: { color: COLORS.cream, fontWeight: 'bold', fontSize: 24, lineHeight: 28 },
-  deadlineMonth: { color: COLORS.gold, fontWeight: 'bold', fontSize: 12 },
+  deadlineDay: { color: COLORS.cream, fontFamily: FONTS.semibold, fontSize: 24, lineHeight: 28 },
+  deadlineMonth: { color: COLORS.gold, fontFamily: FONTS.semibold, fontSize: 12 },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   listIcon: {
     width: 34,
@@ -279,12 +283,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.burgundyLight,
   },
-  itemTitle: { color: COLORS.text, fontWeight: '600' },
+  itemTitle: { color: COLORS.text, fontFamily: FONTS.medium },
   itemMeta: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
   status: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusDone: { backgroundColor: '#E3EEDF' },
   statusPending: { backgroundColor: COLORS.goldLight },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
+  statusText: { fontSize: 12, fontFamily: FONTS.semibold },
   addRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,10 +301,10 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: 'rgba(129,23,27,0.3)',
   },
-  addText: { color: COLORS.burgundy, fontWeight: 'bold' },
+  addText: { color: COLORS.burgundy, fontFamily: FONTS.semibold },
   gradeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   gradeLabel: { width: 90, color: COLORS.text },
   gradeTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: COLORS.creamDark },
   gradeFill: { height: 8, borderRadius: 4, backgroundColor: COLORS.burgundy },
-  gradeValue: { width: 36, textAlign: 'right', color: COLORS.muted, fontWeight: 'bold' },
+  gradeValue: { width: 36, textAlign: 'right', color: COLORS.muted, fontFamily: FONTS.semibold },
 });

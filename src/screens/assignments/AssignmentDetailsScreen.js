@@ -52,7 +52,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
           <View style={{ flexDirection: 'row' }}>
             <IconButton
               icon="pencil-outline"
-              iconColor={COLORS.cream}
+              iconColor={COLORS.maroon}
               onPress={() =>
                 navigation.navigate('AssignmentForm', {
                   assignment: {
@@ -65,7 +65,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
                 })
               }
             />
-            <IconButton icon="delete-outline" iconColor={COLORS.cream} onPress={() => setConfirmDelete(true)} />
+            <IconButton icon="delete-outline" iconColor={COLORS.maroon} onPress={() => setConfirmDelete(true)} />
           </View>
         ) : null,
     });
@@ -133,7 +133,8 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Header */}
-        <LinearGradient colors={[COLORS.maroon, COLORS.burgundy]} style={styles.hero}>
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.heroShadow}>
+        <LinearGradient colors={[COLORS.burgundy, COLORS.maroon]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={styles.circle} />
           <Text style={styles.heroCourse}>{course?.title}</Text>
           <Text style={styles.heroTitle}>{assignment.title}</Text>
@@ -149,6 +150,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
             </View>
           </View>
         </LinearGradient>
+        </Animated.View>
 
         {assignment.description ? (
           <Animated.View entering={FadeInDown.duration(350)} style={styles.section}>
@@ -256,7 +258,18 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.cream },
-  hero: { padding: 20, paddingTop: 10, paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: 'hidden' },
+  heroShadow: {
+    marginHorizontal: 18,
+    marginTop: 6,
+    borderRadius: 26,
+    backgroundColor: COLORS.maroon,
+    shadowColor: COLORS.maroon,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  hero: { padding: 22, borderRadius: 26, overflow: 'hidden' },
   circle: { position: 'absolute', width: 200, height: 200, borderRadius: 100, right: -70, top: -60, backgroundColor: 'rgba(255,255,255,0.07)' },
   heroCourse: { fontFamily: FONTS.regular, fontSize: 13, color: 'rgba(251,246,238,0.75)' },
   heroTitle: { fontFamily: FONTS.semibold, fontSize: 22, lineHeight: 30, color: COLORS.cream, marginTop: 4 },
@@ -273,7 +286,7 @@ const styles = StyleSheet.create({
   heroChipText: { fontFamily: FONTS.medium, fontSize: 12, color: COLORS.cream },
   section: {
     marginHorizontal: 18,
-    marginTop: 16,
+    marginTop: 14,
     padding: 16,
     borderRadius: 22,
     backgroundColor: COLORS.card,

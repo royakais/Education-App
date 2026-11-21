@@ -13,10 +13,9 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ActivityIndicator, Avatar, Divider, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
 
 import { useAuth } from '../context/AuthContext';
-import MenuButton from '../components/MenuButton';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -28,7 +27,8 @@ import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScr
 import AssignmentFormScreen from '../screens/assignments/AssignmentFormScreen';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import { COLORS, headerOptions } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, FONTS, headerOptions } from '../theme';
 
 const AuthStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -92,7 +92,7 @@ function CoursesNavigator() {
       <CoursesStack.Screen
         name="CoursesList"
         component={CoursesScreen}
-        options={{ title: 'My Courses', headerLeft: () => <MenuButton /> }}
+        options={{ headerShown: false }}
       />
       {courseScreens(CoursesStack)}
     </CoursesStack.Navigator>
@@ -105,7 +105,7 @@ function AssignmentsNavigator() {
       <AssignmentsStack.Screen
         name="AssignmentsList"
         component={AssignmentsScreen}
-        options={{ title: 'Assignments', headerLeft: () => <MenuButton /> }}
+        options={{ headerShown: false }}
       />
       {courseScreens(AssignmentsStack)}
     </AssignmentsStack.Navigator>
@@ -128,7 +128,7 @@ function HomeTabs() {
         ...headerOptions,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: COLORS.muted,
-        tabBarLabelStyle: { fontWeight: '600' },
+        tabBarLabelStyle: { fontFamily: FONTS.medium, fontSize: 11 },
         tabBarStyle: { backgroundColor: COLORS.card, borderTopColor: COLORS.creamDark },
         tabBarIcon: ({ color, size }) => (
           <MaterialCommunityIcons name={tabIcons[route.name]} color={color} size={size} />
@@ -145,7 +145,7 @@ function HomeTabs() {
       <Tab.Screen
         name="Quiz"
         component={QuizScreen}
-        options={{ title: 'Practice Quiz', headerLeft: () => <MenuButton /> }}
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
@@ -158,20 +158,31 @@ function DrawerContent(props) {
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
-      <View style={styles.drawerHeader}>
-        <Avatar.Icon size={60} icon="school" color={COLORS.burgundy} style={styles.drawerAvatar} />
-        <Text variant="titleMedium" style={styles.drawerName}>
-          {name}
-        </Text>
-        <Text variant="bodySmall" style={styles.drawerEmail}>
-          {user?.email}
-        </Text>
+      <View style={styles.drawerTop}>
+        <LinearGradient
+          colors={['rgba(129,23,27,0.55)', 'rgba(212,165,116,0.5)', 'rgba(129,23,27,0.05)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.drawerEdge}
+        >
+          <LinearGradient colors={['#FFFCF7', '#F8ECE4']} style={styles.drawerCard}>
+            <LinearGradient colors={[COLORS.burgundy, COLORS.maroon]} style={styles.drawerAvatar}>
+              <Text style={styles.drawerInitial}>{name[0].toUpperCase()}</Text>
+            </LinearGradient>
+            <Text style={styles.drawerName} numberOfLines={1}>
+              {name}
+            </Text>
+            <Text style={styles.drawerEmail} numberOfLines={1}>
+              {user?.email}
+            </Text>
+          </LinearGradient>
+        </LinearGradient>
       </View>
-      <Divider style={{ marginBottom: 8 }} />
       <DrawerItemList {...props} />
       <DrawerItem
         label="Log out"
-        icon={({ color, size }) => <MaterialCommunityIcons name="logout" color={color} size={size} />}
+        labelStyle={styles.drawerLabel}
+        icon={({ size }) => <MaterialCommunityIcons name="logout" color={COLORS.muted} size={size} />}
         onPress={logout}
       />
     </DrawerContentScrollView>
@@ -187,7 +198,9 @@ function MainDrawer() {
         ...headerOptions,
         headerShown: false,
         drawerActiveTintColor: theme.colors.primary,
+        drawerInactiveTintColor: COLORS.text,
         drawerActiveBackgroundColor: COLORS.burgundyLight,
+        drawerLabelStyle: styles.drawerLabel,
         drawerStyle: { backgroundColor: COLORS.cream },
       }}
     >
@@ -205,7 +218,7 @@ function MainDrawer() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          headerShown: true,
+          headerShown: false,
           drawerIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="account-circle-outline" color={color} size={size} />
           ),
@@ -231,14 +244,12 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  drawerHeader: {
-    backgroundColor: COLORS.burgundy,
-    padding: 20,
-    paddingTop: 56,
-    borderBottomWidth: 4,
-    borderBottomColor: COLORS.gold,
-  },
-  drawerAvatar: { backgroundColor: COLORS.gold },
-  drawerName: { marginTop: 12, fontWeight: 'bold', color: '#FFFFFF' },
-  drawerEmail: { color: 'rgba(255,255,255,0.8)' },
+  drawerTop: { paddingTop: 56, paddingHorizontal: 14, paddingBottom: 14 },
+  drawerEdge: { borderRadius: 24, padding: 1.2 },
+  drawerCard: { borderRadius: 23, padding: 18 },
+  drawerAvatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  drawerInitial: { fontFamily: FONTS.semibold, fontSize: 20, color: COLORS.cream },
+  drawerName: { fontFamily: FONTS.semibold, fontSize: 17, color: COLORS.maroon, marginTop: 12 },
+  drawerEmail: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.muted },
+  drawerLabel: { fontFamily: FONTS.medium, fontSize: 14 },
 });

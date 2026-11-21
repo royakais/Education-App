@@ -8,6 +8,7 @@ import { useAssignments } from '../../hooks/useAssignments';
 import { useCourses } from '../../hooks/useCourses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { createStarterAssignmentsFor } from '../../services/courses';
+import ScreenHeader from '../../components/ScreenHeader';
 import { COLORS, FONTS } from '../../theme';
 import { daysUntil, formatDayMonth, relativeDay } from '../../utils/dates';
 
@@ -73,23 +74,34 @@ export default function AssignmentsScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.filters}>
-        {FILTERS.map((f) => (
-          <Pressable key={f.key} onPress={() => setFilter(f.key)} style={[styles.filter, filter === f.key && styles.filterOn]}>
-            <Text style={[styles.filterText, filter === f.key && { color: COLORS.cream }]}>{f.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: COLORS.cream }}>
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} />
+        <View>
+          <ScreenHeader title="Assignments" />
+          <ActivityIndicator style={{ marginTop: 40 }} />
+        </View>
       ) : (
         <FlatList
           data={list}
           keyExtractor={(a) => a.id}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 18, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 110 }}
+          ListHeaderComponent={
+            <View style={{ marginHorizontal: -18, marginBottom: 14 }}>
+              <ScreenHeader eyebrow={`${assignments.filter((a) => !a.submitted && courseById[a.courseId]).length} TO DO`} title="Assignments" />
+              <View style={styles.filters}>
+                {FILTERS.map((f) => (
+                  <Pressable
+                    key={f.key}
+                    onPress={() => setFilter(f.key)}
+                    style={[styles.filter, filter === f.key && styles.filterOn]}
+                  >
+                    <Text style={[styles.filterText, filter === f.key && { color: COLORS.cream }]}>{f.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <Icon source={filter === 'done' ? 'tray' : 'party-popper'} size={40} color={COLORS.gold} />
@@ -119,7 +131,7 @@ export default function AssignmentsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingTop: 14 },
+  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 22, paddingTop: 14 },
   filter: {
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -135,9 +147,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    paddingLeft: 18,
+    paddingLeft: 20,
     marginBottom: 10,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.creamDark,
@@ -151,5 +163,5 @@ const styles = StyleSheet.create({
   statusText: { fontFamily: FONTS.semibold, fontSize: 11.5 },
   empty: { alignItems: 'center', marginTop: 60, gap: 6 },
   emptyTitle: { fontFamily: FONTS.semibold, fontSize: 16, color: COLORS.maroon },
-  fab: { position: 'absolute', right: 16, bottom: 16, backgroundColor: COLORS.burgundy },
+  fab: { position: 'absolute', right: 18, bottom: 18, backgroundColor: COLORS.burgundy, borderRadius: 20 },
 });

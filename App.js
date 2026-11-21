@@ -39,7 +39,7 @@ export default function App() {
               <AppNavigator />
             </NavigationContainer>
           </AuthProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

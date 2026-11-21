@@ -1,10 +1,9 @@
 // Home: welcome, centered course carousel with fading info, and a compact calendar.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Icon, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
-import { setStatusBarStyle } from 'expo-status-bar';
-import { DrawerActions, useFocusEffect } from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeIn,
@@ -120,14 +119,6 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [active, setActive] = useState(0);
   const firstName = (user?.displayName || 'Student').split(' ')[0];
-
-  // Cream screen → dark status bar icons here; other screens have maroon headers.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('dark');
-      return () => setStatusBarStyle('light');
-    }, [])
-  );
 
   // Course + its (dummy) info, nearest deadline first.
   const items = useMemo(() => {

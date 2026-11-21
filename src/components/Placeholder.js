@@ -1,4 +1,5 @@
 // Temporary content for screens that are not built yet.
+import { FONTS } from '../theme';
 import { StyleSheet, View } from 'react-native';
 import { Icon, Text, useTheme } from 'react-native-paper';
 
@@ -22,6 +23,6 @@ export default function Placeholder({ icon, title, description, children }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
-  title: { fontWeight: 'bold', textAlign: 'center' },
+  title: { fontFamily: FONTS.semibold, textAlign: 'center' },
   description: { color: '#7D6B70', textAlign: 'center' },
 });

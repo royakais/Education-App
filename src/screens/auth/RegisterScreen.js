@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
-import { COLORS } from '../../theme';
+import { COLORS, FONTS } from '../../theme';
 import { authErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
@@ -98,7 +98,7 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, justifyContent: 'center', padding: 24, backgroundColor: COLORS.cream },
-  title: { fontWeight: 'bold', textAlign: 'center', color: COLORS.burgundy },
+  title: { fontFamily: FONTS.semibold, textAlign: 'center', color: COLORS.burgundy },
   subtitle: { textAlign: 'center', color: COLORS.muted, marginTop: 8, marginBottom: 24 },
   input: { marginBottom: 12 },
   link: { marginTop: 12 },
