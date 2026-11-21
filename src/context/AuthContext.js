@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
+import { createDefaultCourses } from '../services/courses';
 
 const AuthContext = createContext(null);
 
@@ -34,6 +35,8 @@ export function AuthProvider({ children }) {
       email,
       createdAt: serverTimestamp(),
     });
+    // Every new student starts with the default CS courses.
+    await createDefaultCourses(newUser.uid);
   };
 
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);

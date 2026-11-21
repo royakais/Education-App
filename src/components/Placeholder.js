@@ -23,5 +23,5 @@ export default function Placeholder({ icon, title, description, children }) {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   title: { fontWeight: 'bold', textAlign: 'center' },
-  description: { color: '#666', textAlign: 'center' },
+  description: { color: '#7D6B70', textAlign: 'center' },
 });

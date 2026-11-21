@@ -5,6 +5,6 @@ import { IconButton } from 'react-native-paper';
 export default function MenuButton() {
   const navigation = useNavigation();
   return (
-    <IconButton icon="menu" onPress={() => navigation.dispatch(DrawerActions.openDrawer())} />
+    <IconButton icon="menu" iconColor="#FFFFFF" onPress={() => navigation.dispatch(DrawerActions.openDrawer())} />
   );
 }

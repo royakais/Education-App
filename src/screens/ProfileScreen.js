@@ -32,6 +32,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', paddingTop: 48, padding: 24 },
   name: { marginTop: 16, fontWeight: 'bold' },
-  email: { color: '#666', marginTop: 4 },
+  email: { color: '#7D6B70', marginTop: 4 },
   button: { marginTop: 32 },
 });

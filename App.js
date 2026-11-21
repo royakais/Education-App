@@ -7,7 +7,7 @@ import { PaperProvider } from 'react-native-paper';
 
 import { AuthProvider } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { theme } from './src/theme';
+import { navigationTheme, theme } from './src/theme';
 
 export default function App() {
   return (
@@ -15,11 +15,11 @@ export default function App() {
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <AuthProvider>
-            <NavigationContainer>
+            <NavigationContainer theme={navigationTheme}>
               <AppNavigator />
             </NavigationContainer>
           </AuthProvider>
-          <StatusBar style="dark" />
+          <StatusBar style="light" />
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

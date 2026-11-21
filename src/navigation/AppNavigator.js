@@ -3,7 +3,7 @@
 //   - Drawer (Home, Profile, Log out) when logged in
 //       Home = bottom Tabs (Courses, Assignments, Quiz)
 //           Courses tab = Stack (Courses -> CourseDetails -> AssignmentDetails)
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
@@ -21,10 +21,12 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import CoursesScreen from '../screens/courses/CoursesScreen';
 import CourseDetailsScreen from '../screens/courses/CourseDetailsScreen';
+import CourseFormScreen from '../screens/courses/CourseFormScreen';
 import AssignmentsScreen from '../screens/assignments/AssignmentsScreen';
 import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScreen';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import { COLORS, headerOptions } from '../theme';
 
 const AuthStack = createNativeStackNavigator();
 const CoursesStack = createNativeStackNavigator();
@@ -44,7 +46,7 @@ function AuthNavigator() {
 
 function CoursesNavigator() {
   return (
-    <CoursesStack.Navigator>
+    <CoursesStack.Navigator screenOptions={headerOptions}>
       <CoursesStack.Screen
         name="CoursesList"
         component={CoursesScreen}
@@ -53,7 +55,15 @@ function CoursesNavigator() {
       <CoursesStack.Screen
         name="CourseDetails"
         component={CourseDetailsScreen}
-        options={({ route }) => ({ title: route.params?.courseTitle ?? 'Course' })}
+        options={{ title: 'Course' }}
+      />
+      <CoursesStack.Screen
+        name="CourseForm"
+        component={CourseFormScreen}
+        options={({ route }) => ({
+          title: route.params?.course ? 'Edit course' : 'New course',
+          presentation: 'modal',
+        })}
       />
       <CoursesStack.Screen
         name="AssignmentDetails"
@@ -66,7 +76,7 @@ function CoursesNavigator() {
 
 function AssignmentsNavigator() {
   return (
-    <AssignmentsStack.Navigator>
+    <AssignmentsStack.Navigator screenOptions={headerOptions}>
       <AssignmentsStack.Screen
         name="AssignmentsList"
         component={AssignmentsScreen}
@@ -93,7 +103,10 @@ function HomeTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        ...headerOptions,
         tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: COLORS.muted,
+        tabBarLabelStyle: { fontWeight: '600' },
         tabBarIcon: ({ color, size }) => (
           <MaterialCommunityIcons name={tabIcons[route.name]} color={color} size={size} />
         ),
@@ -120,13 +133,13 @@ function DrawerContent(props) {
   const name = user?.displayName || 'Student';
 
   return (
-    <DrawerContentScrollView {...props}>
-      <View style={{ padding: 16 }}>
-        <Avatar.Icon size={56} icon="school" />
-        <Text variant="titleMedium" style={{ marginTop: 12, fontWeight: 'bold' }}>
+    <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
+      <View style={styles.drawerHeader}>
+        <Avatar.Icon size={60} icon="school" color={COLORS.burgundy} style={styles.drawerAvatar} />
+        <Text variant="titleMedium" style={styles.drawerName}>
           {name}
         </Text>
-        <Text variant="bodySmall" style={{ color: '#666' }}>
+        <Text variant="bodySmall" style={styles.drawerEmail}>
           {user?.email}
         </Text>
       </View>
@@ -146,7 +159,13 @@ function MainDrawer() {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <DrawerContent {...props} />}
-      screenOptions={{ headerShown: false, drawerActiveTintColor: theme.colors.primary }}
+      screenOptions={{
+        ...headerOptions,
+        headerShown: false,
+        drawerActiveTintColor: theme.colors.primary,
+        drawerActiveBackgroundColor: COLORS.burgundyLight,
+        drawerStyle: { backgroundColor: COLORS.cream },
+      }}
     >
       <Drawer.Screen
         name="Home"
@@ -185,3 +204,16 @@ export default function AppNavigator() {
 
   return user ? <MainDrawer /> : <AuthNavigator />;
 }
+
+const styles = StyleSheet.create({
+  drawerHeader: {
+    backgroundColor: COLORS.burgundy,
+    padding: 20,
+    paddingTop: 56,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.gold,
+  },
+  drawerAvatar: { backgroundColor: COLORS.gold },
+  drawerName: { marginTop: 12, fontWeight: 'bold', color: '#FFFFFF' },
+  drawerEmail: { color: 'rgba(255,255,255,0.8)' },
+});

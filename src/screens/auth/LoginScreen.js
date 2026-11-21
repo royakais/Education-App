@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import { Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
+import { Avatar, Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
+import { COLORS } from '../../theme';
 import { authErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
@@ -35,9 +36,16 @@ export default function LoginScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
+        <Avatar.Icon
+          size={84}
+          icon="school"
+          color={COLORS.gold}
+          style={{ backgroundColor: theme.colors.primary, marginBottom: 16 }}
+        />
         <Text variant="displaySmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
           Education App
         </Text>
+        <View style={styles.accent} />
         <Text variant="bodyLarge" style={styles.subtitle}>
           Keep track of your courses and deadlines
         </Text>
@@ -83,9 +91,10 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: COLORS.cream },
   header: { alignItems: 'center', marginBottom: 32 },
-  subtitle: { marginTop: 8, color: '#666' },
+  accent: { width: 48, height: 4, borderRadius: 2, backgroundColor: COLORS.gold, marginTop: 12 },
+  subtitle: { marginTop: 12, color: COLORS.muted },
   input: { marginBottom: 12 },
   link: { marginTop: 12 },
 });
