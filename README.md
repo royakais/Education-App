@@ -13,7 +13,7 @@ Scan the QR code with **Expo Go** on your phone, or press `a` to open it in the 
 
 ## Tech
 
-- **UI:** React Native Paper, maroon (#540804) + burgundy (#81171B) on cream
+- **UI:** React Native Paper, Poppins font, maroon (#540804) + burgundy (#81171B) on cream
 - **Navigation:** React Navigation (stack, bottom tabs, drawer)
 - **Backend:** Firebase Authentication (email/password) + Cloud Firestore
 - **Public API:** Open Trivia DB (practice quiz)
@@ -37,6 +37,7 @@ src/
   hooks/useCourses.js       live course list
   data/dummyCourseInfo.js   DUMMY lectures, assignments, tests (dates relative to today)
   utils/dates.js            date helpers
+  utils/crn.js              generated CRN per course
   data/defaultCourses.js    default courses + color palette
   navigation/AppNavigator.js
   screens/
@@ -46,7 +47,7 @@ src/
     assignments/            Assignments list, Assignment details
     quiz/                   Practice quiz
     ProfileScreen.js
-  components/               CourseCard, EventCalendar, MenuButton, Placeholder
+  components/               CourseCarousel, WeekCalendar, MenuButton, Placeholder
   theme.js
 ```
 
@@ -63,7 +64,7 @@ src/
 - [x] Firebase auth (register, login, logout, stays logged in)
 - [x] Stack, tab and drawer navigation with placeholder screens
 - [x] Courses CRUD (5 default CS courses created at sign-up)
-- [x] Home: welcome, swipeable course cards (nearest deadline first) with animated dropdown, calendar of deadlines and tests
+- [x] Home: typing welcome + rotating smart line, centered course carousel (code + CRN) with fading course info, week calendar that expands to the month
 - [x] Course page with full info (dummy lectures/assignments/tests for now)
 - [ ] Assignments CRUD + camera photo
 - [ ] Native features: notifications, calendar, share, haptics

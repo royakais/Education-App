@@ -60,3 +60,22 @@ export function greeting() {
   if (h < 18) return 'Good afternoon';
   return 'Good evening';
 }
+
+// Sunday of the week that contains `date` (optionally shifted by whole weeks).
+export function startOfWeek(date = new Date(), weekOffset = 0) {
+  const d = startOfDay(date);
+  d.setDate(d.getDate() - d.getDay() + weekOffset * 7);
+  return d;
+}
+
+// "SATURDAY · 21 NOVEMBER"
+export function formatHeaderDate(date = new Date()) {
+  return `${DAYS_LONG[date.getDay()]} · ${date.getDate()} ${MONTHS[date.getMonth()]}`.toUpperCase();
+}
+
+// "Mon 23 Nov"
+export function formatDayMonth(date) {
+  return `${DAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()].slice(0, 3)}`;
+}
+
+export const DAY_SHORT = DAYS;

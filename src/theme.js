@@ -1,6 +1,6 @@
 // App colors: deep maroon + burgundy on a warm cream background.
 import { DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
-import { MD3LightTheme } from 'react-native-paper';
+import { MD3LightTheme, configureFonts } from 'react-native-paper';
 
 export const COLORS = {
   maroon: '#540804', // darkest — hero backgrounds, gradients
@@ -18,9 +18,37 @@ export const COLORS = {
   white: '#FFFFFF',
 };
 
+// Poppins font files (loaded in App.js).
+export const FONTS = {
+  light: 'Poppins_300Light',
+  regular: 'Poppins_400Regular',
+  medium: 'Poppins_500Medium',
+  semibold: 'Poppins_600SemiBold',
+  bold: 'Poppins_700Bold',
+};
+
+// Use the right Poppins file for every Paper text style (titles semibold, labels medium...).
+const configuredFonts = configureFonts({
+  config: Object.fromEntries(
+    Object.entries(MD3LightTheme.fonts)
+      .filter(([, v]) => v && v.fontSize)
+      .map(([name, v]) => {
+        const w = String(v.fontWeight);
+        const fontFamily = w === '400' ? FONTS.regular : w === '500' ? FONTS.medium : FONTS.semibold;
+        return [name, { ...v, fontFamily, fontWeight: 'normal' }];
+      })
+  ),
+});
+// Plain <Text> without a variant uses "default".
+const paperFonts = {
+  ...configuredFonts,
+  default: { ...MD3LightTheme.fonts.default, fontFamily: FONTS.regular, fontWeight: 'normal' },
+};
+
 // Theme for React Native Paper components (buttons, inputs, cards, FAB...).
 export const theme = {
   ...MD3LightTheme,
+  fonts: paperFonts,
   roundness: 3,
   colors: {
     ...MD3LightTheme.colors,
@@ -50,6 +78,12 @@ export const theme = {
 // Theme for React Navigation (screen backgrounds, tab bar).
 export const navigationTheme = {
   ...NavigationDefaultTheme,
+  fonts: {
+    regular: { fontFamily: FONTS.regular, fontWeight: 'normal' },
+    medium: { fontFamily: FONTS.medium, fontWeight: 'normal' },
+    bold: { fontFamily: FONTS.semibold, fontWeight: 'normal' },
+    heavy: { fontFamily: FONTS.bold, fontWeight: 'normal' },
+  },
   colors: {
     ...NavigationDefaultTheme.colors,
     primary: COLORS.burgundy,
@@ -64,6 +98,6 @@ export const navigationTheme = {
 export const headerOptions = {
   headerStyle: { backgroundColor: COLORS.maroon },
   headerTintColor: COLORS.cream,
-  headerTitleStyle: { fontWeight: 'bold' },
+  headerTitleStyle: { fontFamily: FONTS.semibold },
   headerShadowVisible: false,
 };

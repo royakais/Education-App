@@ -1,248 +1,252 @@
-// Home: welcome, swipeable course cards (most urgent first) and a calendar.
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+// Home: welcome, centered course carousel with fading info, and a compact calendar.
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Icon, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { DrawerActions, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAuth } from '../../context/AuthContext';
 import { useCourses } from '../../hooks/useCourses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
-import CourseCard from '../../components/CourseCard';
-import EventCalendar from '../../components/EventCalendar';
-import MenuButton from '../../components/MenuButton';
-import { COLORS } from '../../theme';
-import { daysUntil, greeting } from '../../utils/dates';
+import CourseCarousel from '../../components/CourseCarousel';
+import WeekCalendar from '../../components/WeekCalendar';
+import { COLORS, FONTS } from '../../theme';
+import { daysUntil, formatHeaderDate, greeting, relativeDay } from '../../utils/dates';
 
-const CARD_GAP = 14;
-const SIDE = 20;
+const SIDE = 22;
+
+// Types the name letter by letter, with a blinking cursor that disappears at the end.
+function TypingName({ name }) {
+  const [shown, setShown] = useState('');
+  const [typing, setTyping] = useState(true);
+  const blink = useSharedValue(1);
+
+  useEffect(() => {
+    let i = 0;
+    setShown('');
+    setTyping(true);
+    const timer = setInterval(() => {
+      i += 1;
+      setShown(name.slice(0, i));
+      if (i >= name.length) {
+        clearInterval(timer);
+        setTimeout(() => setTyping(false), 1200);
+      }
+    }, 90);
+    blink.value = withRepeat(withSequence(withTiming(0, { duration: 450 }), withTiming(1, { duration: 450 })), -1);
+    return () => clearInterval(timer);
+  }, [name]);
+
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: blink.value }));
+
+  return (
+    <View style={styles.nameRow}>
+      <Text style={styles.name}>{shown || ' '}</Text>
+      {typing ? <Animated.View style={[styles.cursor, cursorStyle]} /> : null}
+    </View>
+  );
+}
+
+// One short line that changes every few seconds (deadlines, tests, next due...).
+function SmartLine({ messages }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (messages.length < 2) return undefined;
+    const t = setInterval(() => setI((x) => (x + 1) % messages.length), 4000);
+    return () => clearInterval(t);
+  }, [messages.length]);
+
+  const text = messages[i % messages.length] ?? '';
+  return (
+    <Animated.View layout={LinearTransition.duration(250)} style={styles.pill}>
+      <View style={styles.pillDot} />
+      <Animated.Text key={text} entering={FadeIn.duration(450)} style={styles.pillText}>
+        {text}
+      </Animated.Text>
+    </Animated.View>
+  );
+}
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const { courses, loading } = useCourses();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const [index, setIndex] = useState(0);
-
-  const cardWidth = width - SIDE * 2;
+  const [active, setActive] = useState(0);
   const firstName = (user?.displayName || 'Student').split(' ')[0];
 
-  // Attach the (dummy) info to each course and sort: nearest deadline first.
+  // Cream screen → dark status bar icons here; other screens have maroon headers.
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('dark');
+      return () => setStatusBarStyle('light');
+    }, [])
+  );
+
+  // Course + its (dummy) info, nearest deadline first.
   const items = useMemo(() => {
-    const withInfo = courses.map((course) => ({ course, info: getCourseInfo(course) }));
+    const list = courses.map((course) => ({ course, info: getCourseInfo(course) }));
     const due = (x) => (x.info.nextAssignment ? x.info.nextAssignment.dueDate.getTime() : Infinity);
-    return withInfo.sort((a, b) => due(a) - due(b));
+    return list.sort((a, b) => due(a) - due(b));
   }, [courses]);
 
-  // Everything for the calendar: assignment deadlines + tests of all courses.
   const events = useMemo(
     () =>
       items.flatMap(({ course, info }) => [
-        ...info.assignments.map((a) => ({ ...a, date: a.dueDate, course })),
-        ...info.tests.map((t) => ({ ...t, course })),
+        ...info.assignments.map((a) => ({ ...a, date: a.dueDate, course, code: info.code })),
+        ...info.tests.map((t) => ({ ...t, course, code: info.code })),
       ]),
     [items]
   );
 
-  const dueThisWeek = events.filter(
-    (e) => e.type === 'assignment' && !e.submitted && daysUntil(e.date) >= 0 && daysUntil(e.date) <= 7
-  ).length;
-  const testsSoon = events.filter(
-    (e) => e.type === 'test' && daysUntil(e.date) >= 0 && daysUntil(e.date) <= 14
-  ).length;
+  const messages = useMemo(() => {
+    const dueWeek = events.filter(
+      (e) => e.type === 'assignment' && !e.submitted && daysUntil(e.date) >= 0 && daysUntil(e.date) <= 7
+    );
+    const tests = events.filter((e) => e.type === 'test' && daysUntil(e.date) >= 0 && daysUntil(e.date) <= 7);
+    const list = [];
+    if (dueWeek.length || tests.length) {
+      const parts = [];
+      if (dueWeek.length) parts.push(`${dueWeek.length} deadline${dueWeek.length > 1 ? 's' : ''} this week`);
+      if (tests.length) parts.push(`${tests.length} ${tests.length > 1 ? 'tests' : 'test'}`);
+      list.push(parts.join(' · '));
+    } else {
+      list.push('Nothing due this week');
+    }
+    const next = [...dueWeek].sort((a, b) => a.date - b.date)[0];
+    if (next) list.push(`${next.title.split(':')[0]} is due ${relativeDay(next.date)}`);
+    const nextTest = [...tests].sort((a, b) => a.date - b.date)[0];
+    if (nextTest) list.push(`${nextTest.code} ${nextTest.kind.toLowerCase()} ${relativeDay(nextTest.date)}`);
+    return list;
+  }, [events]);
 
   const openCourse = (course) => navigation.navigate('CourseDetails', { course });
-
-  const onScroll = (e) => {
-    const i = Math.round(e.nativeEvent.contentOffset.x / (cardWidth + CARD_GAP));
-    if (i !== index) setIndex(i);
-  };
 
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={{ paddingBottom: 32 }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Welcome header */}
-      <LinearGradient
-        colors={[COLORS.maroon, COLORS.burgundy]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.hero, { paddingTop: insets.top + 4 }]}
-      >
-        <View style={styles.heroCircle} />
-        <View style={styles.heroTop}>
-          <MenuButton />
-          <Pressable style={styles.avatar} onPress={() => navigation.navigate('Profile')}>
-            <Text style={styles.avatarText}>{firstName[0]?.toUpperCase()}</Text>
-          </Pressable>
-        </View>
-
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <Text style={styles.greeting}>{greeting()},</Text>
-          <Text variant="headlineLarge" style={styles.welcome}>
-            Welcome, {firstName} 👋
-          </Text>
-          <Text style={styles.heroSub}>Ready to learn something new today?</Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(120).duration(400)} style={styles.stats}>
-          <View style={styles.stat}>
-            <Icon source="clipboard-clock-outline" size={22} color={COLORS.gold} />
-            <View>
-              <Text style={styles.statNumber}>{dueThisWeek}</Text>
-              <Text style={styles.statLabel}>due this week</Text>
-            </View>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Icon source="file-document-edit-outline" size={22} color={COLORS.gold} />
-            <View>
-              <Text style={styles.statNumber}>{testsSoon}</Text>
-              <Text style={styles.statLabel}>tests in 2 weeks</Text>
-            </View>
-          </View>
-        </Animated.View>
-      </LinearGradient>
-
-      {/* Courses carousel */}
-      <View style={styles.sectionHeader}>
-        <View>
-          <Text style={styles.sectionTitle}>Choose a course</Text>
-          <Text style={styles.sectionHint}>Most urgent first · swipe for more</Text>
-        </View>
-        <Pressable onPress={() => navigation.navigate('Courses')} hitSlop={8}>
-          <Text style={styles.seeAll}>See all</Text>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <Pressable style={styles.iconBtn} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+          <Icon source="menu" size={20} color={COLORS.maroon} />
         </Pressable>
+        <Pressable onPress={() => navigation.navigate('Profile')}>
+          <LinearGradient colors={[COLORS.burgundy, COLORS.maroon]} style={styles.avatar}>
+            <Text style={styles.avatarText}>{firstName[0]?.toUpperCase()}</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
+
+      {/* Welcome */}
+      <Animated.View entering={FadeInDown.duration(450)} style={styles.hello}>
+        <Text style={styles.date}>{formatHeaderDate()}</Text>
+        <Text style={styles.greet}>{greeting()},</Text>
+        <TypingName name={firstName} />
+        <SmartLine messages={messages} />
+      </Animated.View>
+
+      {/* Courses */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Choose a course</Text>
+        {items.length ? (
+          <Text style={styles.counter}>
+            {Math.min(active + 1, items.length)} / {items.length}
+          </Text>
+        ) : null}
       </View>
 
       {loading ? (
         <ActivityIndicator style={{ marginVertical: 40 }} />
       ) : items.length === 0 ? (
-        <Pressable style={styles.emptyCard} onPress={() => navigation.navigate('Courses')}>
-          <Icon source="book-plus-outline" size={36} color={COLORS.burgundy} />
-          <Text style={styles.emptyTitle}>No courses yet</Text>
-          <Text style={styles.emptyText}>Tap here to add your first course</Text>
+        <Pressable style={styles.empty} onPress={() => navigation.navigate('Courses')}>
+          <Icon source="book-plus-outline" size={30} color={COLORS.burgundy} />
+          <Text style={styles.emptyText}>No courses yet — tap to add one</Text>
         </Pressable>
       ) : (
-        <>
-          <FlatList
-            data={items}
-            keyExtractor={(item) => item.course.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={cardWidth + CARD_GAP}
-            decelerationRate="fast"
-            disableIntervalMomentum
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={styles.carousel}
-            ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-            renderItem={({ item, index: i }) => (
-              <CourseCard
-                course={item.course}
-                info={item.info}
-                width={cardWidth}
-                highlight={i === 0}
-                onOpen={() => openCourse(item.course)}
-              />
-            )}
-          />
-          <View style={styles.pager}>
-            {items.map((item, i) => (
-              <View key={item.course.id} style={[styles.pageDot, i === index && styles.pageDotActive]} />
-            ))}
-          </View>
-        </>
+        <Animated.View entering={FadeIn.delay(150).duration(500)}>
+          <CourseCarousel items={items} onOpenCourse={openCourse} onIndexChange={setActive} />
+        </Animated.View>
       )}
 
       {/* Calendar */}
-      <Animated.View layout={LinearTransition.duration(280)} style={styles.calendarSection}>
-        <Text style={styles.sectionTitle}>Your calendar</Text>
-        <Text style={[styles.sectionHint, { marginBottom: 12 }]}>Deadlines and tests at a glance</Text>
-        <EventCalendar events={events} onEventPress={(e) => openCourse(e.course)} />
-      </Animated.View>
+      <View style={styles.calendar}>
+        <WeekCalendar events={events} onEventPress={(e) => openCourse(e.course)} />
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.cream },
-  hero: {
-    paddingHorizontal: SIDE,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: 'hidden',
-  },
-  heroCircle: {
-    position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    right: -90,
-    top: -70,
-    backgroundColor: 'rgba(251,246,238,0.07)',
-  },
-  heroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginLeft: -8,
-  },
-  avatar: {
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SIDE },
+  iconBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.gold,
+    borderRadius: 14,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.creamDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: COLORS.maroon, fontWeight: 'bold', fontSize: 17 },
-  greeting: { color: COLORS.gold, fontSize: 15, marginTop: 10, fontWeight: '600' },
-  welcome: { color: COLORS.cream, fontWeight: 'bold', marginTop: 2 },
-  heroSub: { color: 'rgba(251,246,238,0.75)', marginTop: 4 },
-  stats: {
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontFamily: FONTS.semibold, fontSize: 16, color: COLORS.cream },
+  hello: { paddingHorizontal: SIDE, marginTop: 20 },
+  date: { fontFamily: FONTS.medium, fontSize: 11, letterSpacing: 2, color: COLORS.muted },
+  greet: { fontFamily: FONTS.light, fontSize: 15, color: COLORS.muted, marginTop: 8 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', minHeight: 42 },
+  name: { fontFamily: FONTS.semibold, fontSize: 30, lineHeight: 40, color: COLORS.maroon },
+  cursor: { width: 3, height: 28, borderRadius: 2, backgroundColor: COLORS.burgundy, marginLeft: 4 },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    padding: 14,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    alignSelf: 'flex-start',
+    gap: 8,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.creamDark,
   },
-  stat: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center' },
-  statNumber: { color: COLORS.cream, fontWeight: 'bold', fontSize: 20, lineHeight: 24 },
-  statLabel: { color: 'rgba(251,246,238,0.75)', fontSize: 12 },
-  statDivider: { width: 1, height: 34, backgroundColor: 'rgba(251,246,238,0.2)' },
+  pillDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.burgundy },
+  pillText: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.text },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'baseline',
     paddingHorizontal: SIDE,
-    marginTop: 24,
-    marginBottom: 14,
+    marginTop: 26,
+    marginBottom: 4,
   },
-  sectionTitle: { color: COLORS.maroon, fontWeight: 'bold', fontSize: 20 },
-  sectionHint: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
-  seeAll: { color: COLORS.burgundy, fontWeight: 'bold' },
-  carousel: { paddingHorizontal: SIDE, alignItems: 'flex-start', paddingBottom: 8 },
-  pager: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
-  pageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#E2D3C6' },
-  pageDotActive: { width: 22, backgroundColor: COLORS.burgundy },
-  emptyCard: {
+  sectionTitle: { fontFamily: FONTS.semibold, fontSize: 16, color: COLORS.maroon },
+  counter: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.muted },
+  empty: {
     marginHorizontal: SIDE,
-    padding: 28,
-    borderRadius: 24,
+    marginTop: 10,
+    padding: 24,
+    borderRadius: 22,
     alignItems: 'center',
     gap: 6,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: COLORS.gold,
-    backgroundColor: COLORS.card,
   },
-  emptyTitle: { color: COLORS.maroon, fontWeight: 'bold', fontSize: 16 },
-  emptyText: { color: COLORS.muted },
-  calendarSection: { paddingHorizontal: SIDE, marginTop: 28 },
+  emptyText: { fontFamily: FONTS.regular, color: COLORS.muted },
+  calendar: { paddingHorizontal: SIDE, marginTop: 8 },
 });
