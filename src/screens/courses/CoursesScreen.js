@@ -5,6 +5,7 @@ import { ActivityIndicator, Button, Dialog, FAB, Icon, IconButton, Menu, Portal,
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useCourses } from '../../hooks/useCourses';
+import { useAssignments } from '../../hooks/useAssignments';
 import { deleteCourse } from '../../services/courses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import ScreenHeader from '../../components/ScreenHeader';
@@ -14,6 +15,7 @@ import { generateCrn } from '../../utils/crn';
 export default function CoursesScreen({ navigation }) {
   const { user } = useAuth();
   const { courses, loading } = useCourses();
+  const { assignments } = useAssignments();
   const [menuFor, setMenuFor] = useState(null); // course id whose ⋮ menu is open
   const [toDelete, setToDelete] = useState(null); // course waiting for delete confirmation
   const [deleting, setDeleting] = useState(false);
@@ -34,6 +36,8 @@ export default function CoursesScreen({ navigation }) {
 
   const renderCourse = ({ item, index }) => {
     const info = getCourseInfo(item);
+    const mine = assignments.filter((a) => a.courseId === item.id);
+    const toDo = mine.filter((a) => !a.submitted).length;
     return (
       <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 50).duration(350)} layout={LinearTransition}>
         <Pressable style={styles.card} onPress={() => navigation.navigate('CourseDetails', { course: item })}>
@@ -46,7 +50,7 @@ export default function CoursesScreen({ navigation }) {
               {item.title}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
-              {item.instructor ? item.instructor : info.schedule}
+              {mine.length} assignment{mine.length === 1 ? '' : 's'} · {toDo ? `${toDo} to do` : 'all submitted ✓'}
             </Text>
           </View>
           <Menu

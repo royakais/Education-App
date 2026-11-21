@@ -3,6 +3,9 @@
 // is NOT available inside Expo Go (it's replaced by a stub that throws).
 import { Platform } from 'react-native';
 import * as Calendar from 'expo-calendar/legacy';
+import { getItem, removeItem, setItem } from './storage';
+
+const eventKey = (assignmentId) => `calendar-event:${assignmentId}`;
 
 function phoneTimeZone() {
   try {
@@ -26,7 +29,7 @@ async function findWritableCalendarId() {
 // Adds the deadline to the phone's calendar (with an alarm 1 day before).
 // Returns { mode: 'added' } when saved directly, or { mode: 'form' } when the phone's own
 // calendar screen was opened instead (no writable calendar / permission denied).
-export async function addAssignmentToCalendar({ title, description, dueDate, courseCode }) {
+export async function addAssignmentToCalendar({ assignmentId, title, description, dueDate, courseCode }) {
   const end = new Date(dueDate); // deadline = 23:59
   const start = new Date(end.getTime() - 60 * 60 * 1000); // 1-hour event before the deadline
   const event = {
@@ -42,11 +45,30 @@ export async function addAssignmentToCalendar({ title, description, dueDate, cou
   const calendarId = granted ? await findWritableCalendarId() : null;
 
   if (calendarId) {
-    await Calendar.createEventAsync(calendarId, event);
+    const eventId = await Calendar.createEventAsync(calendarId, event);
+    await setItem(eventKey(assignmentId), eventId); // remember it, to remove it after submitting
     return { mode: 'added', when: end };
   }
 
   // Fallback: open the phone's calendar app with the event filled in; the student taps Save.
   await Calendar.createEventInCalendarAsync(event);
   return { mode: 'form', when: end };
+}
+
+// Is this assignment's deadline already in the phone calendar (added by the app)?
+export async function isInCalendar(assignmentId) {
+  return !!(await getItem(eventKey(assignmentId)));
+}
+
+// Called after submitting: removes the deadline from the phone calendar.
+export async function removeAssignmentFromCalendar(assignmentId) {
+  const eventId = await getItem(eventKey(assignmentId));
+  if (!eventId) return false;
+  try {
+    await Calendar.deleteEventAsync(eventId);
+  } catch {
+    // Event was already deleted by the student in their calendar app.
+  }
+  await removeItem(eventKey(assignmentId));
+  return true;
 }

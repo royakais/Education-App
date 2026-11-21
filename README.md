@@ -16,13 +16,13 @@ Scan the QR code with **Expo Go** on your phone, or press `a` to open it in the 
 - **UI:** React Native Paper, Poppins font, maroon (#540804) + burgundy (#81171B) on cream
 - **Navigation:** React Navigation (stack, bottom tabs, drawer)
 - **Backend:** Firebase Authentication (email/password) + Cloud Firestore
-- **Public API:** Open Trivia DB (practice quiz)
+- **Public API:** Open Trivia DB — every quiz/exam in the app can be practiced with 10 questions (Computers or Mathematics category)
 
 ## Firestore structure
 
 ```
 users/{uid}         name, email, createdAt
-courses/{id}        userId, title, instructor, color
+courses/{id}        userId, title, color
 assignments/{id}    userId, courseId, title, description, dueDate        (default, read-only)
 submissions/{uid_assignmentId}  userId, assignmentId, courseId, images[] (base64), createdAt, updatedAt
 ```
@@ -74,9 +74,9 @@ src/
 - [x] Submissions CRUD (Firestore): create with several photos, view, edit (add / remove / replace photos), delete
 - [x] Native features (Expo SDK):
   - Camera — `expo-image-picker` (camera + multi-select gallery) + `expo-image-manipulator` (compressed to base64)
-  - Sensor — `expo-sensors` Accelerometer tilts the "SUBMITTED" stamp
   - Vibration — React Native `Vibration` long pattern on submit (+ `expo-haptics`)
-  - Calendar — `expo-calendar` adds the due date to the phone's calendar
+  - Calendar — `expo-calendar` (classic API, works in Expo Go) adds the deadline to the phone's calendar; removed automatically after submitting
   - Notifications — `expo-notifications`: reminders 24 h, 6 h and 2 h before each deadline, cancelled on submit; "Test reminders" demo fires them in 5/10/15 s (local notifications, since remote push isn't available in Expo Go)
   - Share to WhatsApp — React Native `Linking` (`whatsapp://send`) with `Share` as fallback
-- [ ] Open Trivia DB quiz
+  - Local storage — `AsyncStorage` remembers calendar events (removed after submitting) and best quiz scores
+- [x] Quizzes tab linked to the app's quizzes, practice with Open Trivia DB, best score saved locally

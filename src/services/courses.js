@@ -33,17 +33,17 @@ export function subscribeToCourses(userId, onChange, onError) {
 }
 
 // CREATE: the new course also gets its default assignment(s).
-export async function addCourse(userId, { title, instructor, color }) {
+export async function addCourse(userId, { title, color }) {
   const batch = writeBatch(db);
   const ref = doc(coursesRef);
-  batch.set(ref, { userId, title, instructor: instructor ?? '', color, createdAt: serverTimestamp() });
+  batch.set(ref, { userId, title, color, createdAt: serverTimestamp() });
   addDefaultAssignments(batch, userId, ref.id, title);
   await batch.commit();
 }
 
 // UPDATE
-export function updateCourse(courseId, { title, instructor, color }) {
-  return updateDoc(doc(db, 'courses', courseId), { title, instructor, color });
+export function updateCourse(courseId, { title, color }) {
+  return updateDoc(doc(db, 'courses', courseId), { title, color });
 }
 
 // DELETE: removes the course with its assignments and the student's submissions for it.
@@ -63,7 +63,7 @@ export async function createDefaultCourses(userId) {
   const batch = writeBatch(db);
   DEFAULT_COURSES.forEach((course) => {
     const ref = doc(coursesRef);
-    batch.set(ref, { userId, title: course.title, instructor: '', color: course.color, createdAt: serverTimestamp() });
+    batch.set(ref, { userId, title: course.title, color: course.color, createdAt: serverTimestamp() });
     addDefaultAssignments(batch, userId, ref.id, course.title);
   });
   await batch.commit();

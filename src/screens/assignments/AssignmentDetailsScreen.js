@@ -4,7 +4,7 @@
 //   Update — Edit: add, remove or replace photos, then Save
 //   Delete — Delete submission
 // Plus native actions: calendar, reminders (with a demo button), WhatsApp share.
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ActivityIndicator, Button, Dialog, Icon, Portal, Snackbar, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +16,7 @@ import { useCourses } from '../../hooks/useCourses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { MAX_PHOTOS, createSubmission, deleteSubmission, updateSubmission } from '../../services/submissions';
 import { pickPhotos, takePhoto } from '../../native/camera';
-import { addAssignmentToCalendar } from '../../native/calendar';
+import { addAssignmentToCalendar, isInCalendar, removeAssignmentFromCalendar } from '../../native/calendar';
 import { scheduleDemoReminders, upcomingReminders } from '../../native/notifications';
 import { shareAssignmentOnWhatsApp } from '../../native/share';
 import { tapFeedback, vibrateSubmitted } from '../../native/vibration';
@@ -26,9 +26,9 @@ import { daysUntil, formatDayMonth, formatLong, relativeDay } from '../../utils/
 
 const uri = (b64) => `data:image/jpeg;base64,${b64}`;
 
-function ActionTile({ icon, label, color = COLORS.burgundy, onPress, busy }) {
+function ActionTile({ icon, label, color = COLORS.burgundy, onPress, busy, disabled }) {
   return (
-    <Pressable style={styles.tile} onPress={onPress} disabled={busy}>
+    <Pressable style={[styles.tile, disabled && { opacity: 0.4 }]} onPress={onPress} disabled={busy || disabled}>
       <View style={[styles.tileIcon, { backgroundColor: `${color}1A` }]}>
         {busy ? <ActivityIndicator size={18} color={color} /> : <Icon source={icon} size={22} color={color} />}
       </View>
@@ -55,6 +55,12 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   const [viewer, setViewer] = useState(null); // photo opened full screen
   const [message, setMessage] = useState('');
   const [messageAction, setMessageAction] = useState(null); // optional button on the snackbar
+  const [inCalendar, setInCalendar] = useState(false);
+
+  // Was this deadline already added to the phone calendar? (remembered in local storage)
+  useEffect(() => {
+    isInCalendar(assignmentId).then(setInCalendar);
+  }, [assignmentId]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: code });
@@ -84,7 +90,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
 
   const editing = draft !== null;
   const late = !assignment.submitted && daysUntil(assignment.dueDate) < 0;
-  const info = { title: assignment.title, description: assignment.description, dueDate: assignment.dueDate, courseCode: code };
+  const info = { assignmentId: assignment.id, title: assignment.title, description: assignment.description, dueDate: assignment.dueDate, courseCode: code };
   const thumb = Math.floor((width - 36 - 34 - 16) / 3); // 3 photos per row inside the card (margins, padding, border, gaps)
   const reminders = upcomingReminders(assignment);
 
@@ -125,6 +131,11 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
         await createSubmission(user.uid, assignment, draft); // CREATE
         vibrateSubmitted(); // long vibration = submitted
         setCelebrate(true);
+        // Submitted → the deadline isn't needed in the calendar anymore (reminders are cancelled by ReminderSync).
+        const removed = await removeAssignmentFromCalendar(assignment.id).catch(() => false);
+        setInCalendar(false);
+        setMessageAction(null);
+        setMessage(removed ? 'Submitted ✓ — removed from your calendar and reminders' : 'Submitted ✓ — reminders turned off');
       }
       setDraft(null);
     });
@@ -142,6 +153,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   const addToCalendar = () =>
     run('calendar', async () => {
       const result = await addAssignmentToCalendar(info);
+      if (result.mode === 'added') setInCalendar(true);
       setMessageAction(null);
       setMessage(
         result.mode === 'added'
@@ -293,15 +305,28 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
             <Icon source={reminders.length ? 'bell-ring-outline' : 'bell-off-outline'} size={16} color={COLORS.caramel} />
             <Text style={styles.reminderText}>
               {assignment.submitted
-                ? 'Reminders are off — you already submitted.'
+                ? 'Submitted — reminders are off and the deadline was removed from your calendar.'
                 : reminders.length
                   ? `Reminders: ${reminders.map((r) => r.label.replace(' hours', ' h')).join(' · ')} before the deadline`
                   : 'No reminders left before this deadline.'}
             </Text>
           </View>
           <View style={styles.tiles}>
-            <ActionTile icon="calendar-plus" label="Add to calendar" onPress={addToCalendar} busy={busy === 'calendar'} />
-            <ActionTile icon="bell-ring-outline" label="Test reminders" onPress={demo} busy={busy === 'demo'} color={COLORS.caramel} />
+            <ActionTile
+              icon={inCalendar ? 'calendar-check' : 'calendar-plus'}
+              label={inCalendar ? 'In calendar' : 'Add to calendar'}
+              onPress={addToCalendar}
+              busy={busy === 'calendar'}
+              disabled={assignment.submitted || inCalendar}
+            />
+            <ActionTile
+              icon="bell-ring-outline"
+              label="Test reminders"
+              onPress={demo}
+              busy={busy === 'demo'}
+              color={COLORS.caramel}
+              disabled={assignment.submitted}
+            />
             <ActionTile icon="whatsapp" label="Share" onPress={share} busy={busy === 'share'} color="#25A244" />
           </View>
         </Animated.View>

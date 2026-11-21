@@ -26,6 +26,7 @@ import AssignmentsScreen from '../screens/assignments/AssignmentsScreen';
 import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScreen';
 import ReminderSync from '../components/ReminderSync';
 import QuizScreen from '../screens/quiz/QuizScreen';
+import QuizPlayScreen from '../screens/quiz/QuizPlayScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, headerOptions } from '../theme';
@@ -34,6 +35,7 @@ const AuthStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
 const CoursesStack = createNativeStackNavigator();
 const AssignmentsStack = createNativeStackNavigator();
+const QuizStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -65,6 +67,7 @@ function courseScreens(Stack) {
         component={AssignmentDetailsScreen}
         options={{ title: 'Assignment' }}
       />
+      <Stack.Screen name="QuizPlay" component={QuizPlayScreen} options={{ title: 'Practice' }} />
     </>
   );
 }
@@ -104,6 +107,15 @@ function AssignmentsNavigator() {
   );
 }
 
+function QuizNavigator() {
+  return (
+    <QuizStack.Navigator screenOptions={headerOptions}>
+      <QuizStack.Screen name="QuizList" component={QuizScreen} options={{ headerShown: false }} />
+      {courseScreens(QuizStack)}
+    </QuizStack.Navigator>
+  );
+}
+
 // ---------- Tab navigation ----------
 function HomeTabs() {
   const theme = useTheme();
@@ -136,7 +148,7 @@ function HomeTabs() {
       />
       <Tab.Screen
         name="Quiz"
-        component={QuizScreen}
+        component={QuizNavigator}
         options={{ headerShown: false }}
       />
     </Tab.Navigator>

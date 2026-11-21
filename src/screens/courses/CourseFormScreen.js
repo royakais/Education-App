@@ -14,7 +14,6 @@ export default function CourseFormScreen({ route, navigation }) {
   const isEditing = !!course;
 
   const [title, setTitle] = useState(course?.title ?? '');
-  const [instructor, setInstructor] = useState(course?.instructor ?? '');
   const [color, setColor] = useState(course?.color ?? COURSE_COLORS[0]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -26,7 +25,7 @@ export default function CourseFormScreen({ route, navigation }) {
     }
     setError('');
     setSaving(true);
-    const data = { title: title.trim(), instructor: instructor.trim(), color };
+    const data = { title: title.trim(), color };
     try {
       if (isEditing) {
         await updateCourse(course.id, data);
@@ -58,14 +57,6 @@ export default function CourseFormScreen({ route, navigation }) {
         value={title}
         onChangeText={setTitle}
         left={<TextInput.Icon icon="book-outline" />}
-        style={styles.input}
-      />
-      <TextInput
-        label="Instructor (optional)"
-        mode="outlined"
-        value={instructor}
-        onChangeText={setInstructor}
-        left={<TextInput.Icon icon="account-tie-outline" />}
         style={styles.input}
       />
 

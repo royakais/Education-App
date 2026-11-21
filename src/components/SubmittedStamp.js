@@ -1,60 +1,25 @@
-// NATIVE FEATURE: Sensor (expo-sensors Accelerometer).
-// A "SUBMITTED" stamp that drops in, then tilts and floats with the phone's movement.
+// "SUBMITTED" stamp shown on a submitted assignment. It drops in when the student has just submitted.
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
-import { Accelerometer } from 'expo-sensors';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
-import { COLORS, FONTS } from '../theme';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { FONTS } from '../theme';
 import { formatDayMonth } from '../utils/dates';
 
 export default function SubmittedStamp({ submittedAt, celebrate }) {
-  const tiltX = useSharedValue(0);
-  const tiltY = useSharedValue(0);
   const scale = useSharedValue(celebrate ? 2 : 1);
   const opacity = useSharedValue(celebrate ? 0 : 1);
 
   useEffect(() => {
-    // Stamp drops in, with a success vibration.
     if (celebrate) {
       opacity.value = withTiming(1, { duration: 200 });
       scale.value = withSequence(withSpring(0.9, { damping: 8 }), withSpring(1));
     }
-
-    // Accelerometer: x/y are about -1…1 depending on how the phone is tilted.
-    // Only used if the device has the sensor (it's missing on web and some emulators).
-    let sub = null;
-    let cancelled = false;
-    Accelerometer.isAvailableAsync()
-      .then((available) => {
-        if (!available || cancelled) return;
-        Accelerometer.setUpdateInterval(60);
-        sub = Accelerometer.addListener(({ x, y }) => {
-          tiltX.value = withSpring(x * 18, { damping: 12 });
-          tiltY.value = withSpring(y * 12, { damping: 12 });
-        });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-      sub?.remove();
-    };
   }, [celebrate]);
 
   const stampStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [
-      { translateX: -tiltX.value },
-      { translateY: tiltY.value * 0.6 },
-      { rotate: `${-8 + tiltX.value * 0.6}deg` },
-      { scale: scale.value },
-    ],
+    transform: [{ rotate: '-6deg' }, { scale: scale.value }],
   }));
 
   return (
@@ -66,13 +31,12 @@ export default function SubmittedStamp({ submittedAt, celebrate }) {
           {submittedAt ? <Text style={styles.stampDate}>{formatDayMonth(submittedAt)}</Text> : null}
         </View>
       </Animated.View>
-      <Text style={styles.hint}>Tilt your phone 📱</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingVertical: 10 },
+  wrap: { alignItems: 'center', paddingVertical: 12 },
   stamp: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -86,5 +50,4 @@ const styles = StyleSheet.create({
   },
   stampText: { fontFamily: FONTS.bold, fontSize: 16, letterSpacing: 2, color: '#2F6B3E' },
   stampDate: { fontFamily: FONTS.medium, fontSize: 11, color: '#2F6B3E' },
-  hint: { fontFamily: FONTS.regular, fontSize: 11, color: COLORS.muted, marginTop: 8 },
 });

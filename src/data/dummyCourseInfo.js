@@ -112,7 +112,7 @@ const GENERIC = {
     [-6, 'Week 1', 'Introduction and course overview'],
     [-1, 'Week 2', 'First topic'],
   ],
-  assignments: [[8, 'Assignment 1', 'Details will be posted by the instructor.', null]],
+  assignments: [[8, 'Assignment 1', 'Details will be posted soon.', null]],
   tests: [[15, 'Quiz 1', 'Quiz']],
 };
 
@@ -182,7 +182,6 @@ export function getCourseInfo(course, assignments = null) {
 
   return {
     ...raw,
-    instructor: course.instructor || 'Instructor not set',
     credits: 3,
     lectures,
     assignments: courseAssignments,

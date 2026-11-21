@@ -131,7 +131,7 @@ export default function HomeScreen({ navigation }) {
     () =>
       items.flatMap(({ course, info }) => [
         ...info.assignments.map((a) => ({ ...a, date: a.dueDate, course, code: info.code })),
-        ...info.tests.map((t) => ({ ...t, course, code: info.code })),
+        ...info.tests.map((t) => ({ ...t, course, code: info.code, quizId: `${course.id}:${t.id}` })),
       ]),
     [items]
   );
@@ -214,7 +214,7 @@ export default function HomeScreen({ navigation }) {
           onEventPress={(e) =>
             e.type === 'assignment'
               ? navigation.navigate('AssignmentDetails', { assignmentId: e.id })
-              : openCourse(e.course)
+              : navigation.navigate('QuizPlay', { quizId: e.quizId })
           }
         />
       </View>
