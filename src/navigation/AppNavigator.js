@@ -21,7 +21,6 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import CoursesScreen from '../screens/courses/CoursesScreen';
 import CourseDetailsScreen from '../screens/courses/CourseDetailsScreen';
-import CourseFormScreen from '../screens/courses/CourseFormScreen';
 import AssignmentsScreen from '../screens/assignments/AssignmentsScreen';
 import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScreen';
 import ReminderSync from '../components/ReminderSync';
@@ -54,14 +53,6 @@ function courseScreens(Stack) {
   return (
     <>
       <Stack.Screen name="CourseDetails" component={CourseDetailsScreen} options={{ title: 'Course' }} />
-      <Stack.Screen
-        name="CourseForm"
-        component={CourseFormScreen}
-        options={({ route }) => ({
-          title: route.params?.course ? 'Edit course' : 'New course',
-          presentation: 'modal',
-        })}
-      />
       <Stack.Screen
         name="AssignmentDetails"
         component={AssignmentDetailsScreen}

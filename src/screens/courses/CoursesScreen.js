@@ -1,46 +1,24 @@
-// Courses tab — READ (live list) and DELETE, with buttons to CREATE and UPDATE.
-import { useState } from 'react';
+// Courses tab — the student's courses (read-only: every student gets the default CS courses).
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, Icon, IconButton, Menu, Portal, Snackbar, Text } from 'react-native-paper';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
-import { useAuth } from '../../context/AuthContext';
+import { ActivityIndicator, Icon, Text } from 'react-native-paper';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useCourses } from '../../hooks/useCourses';
 import { useAssignments } from '../../hooks/useAssignments';
-import { deleteCourse } from '../../services/courses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import ScreenHeader from '../../components/ScreenHeader';
-import { GradientButton } from '../../components/Gradient';
 import { COLORS, FONTS } from '../../theme';
 import { generateCrn } from '../../utils/crn';
 
 export default function CoursesScreen({ navigation }) {
-  const { user } = useAuth();
   const { courses, loading } = useCourses();
   const { assignments } = useAssignments();
-  const [menuFor, setMenuFor] = useState(null); // course id whose ⋮ menu is open
-  const [toDelete, setToDelete] = useState(null); // course waiting for delete confirmation
-  const [deleting, setDeleting] = useState(false);
-  const [message, setMessage] = useState('');
-
-  const confirmDelete = async () => {
-    setDeleting(true);
-    try {
-      await deleteCourse(user.uid, toDelete.id);
-      setMessage(`${getCourseInfo(toDelete).code} deleted`);
-    } catch (e) {
-      setMessage(e.message);
-    } finally {
-      setDeleting(false);
-      setToDelete(null);
-    }
-  };
 
   const renderCourse = ({ item, index }) => {
     const info = getCourseInfo(item);
     const mine = assignments.filter((a) => a.courseId === item.id);
     const toDo = mine.filter((a) => !a.submitted).length;
     return (
-      <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 50).duration(350)} layout={LinearTransition}>
+      <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 50).duration(350)}>
         <Pressable style={styles.card} onPress={() => navigation.navigate('CourseDetails', { course: item })}>
           <View style={[styles.bar, { backgroundColor: item.color }]} />
           <View style={{ flex: 1 }}>
@@ -54,29 +32,7 @@ export default function CoursesScreen({ navigation }) {
               {mine.length} assignment{mine.length === 1 ? '' : 's'} · {toDo ? `${toDo} to do` : 'all submitted ✓'}
             </Text>
           </View>
-          <Menu
-            visible={menuFor === item.id}
-            onDismiss={() => setMenuFor(null)}
-            contentStyle={{ backgroundColor: COLORS.card }}
-            anchor={<IconButton icon="dots-vertical" iconColor={COLORS.muted} onPress={() => setMenuFor(item.id)} />}
-          >
-            <Menu.Item
-              leadingIcon="pencil-outline"
-              title="Edit"
-              onPress={() => {
-                setMenuFor(null);
-                navigation.navigate('CourseForm', { course: item });
-              }}
-            />
-            <Menu.Item
-              leadingIcon="delete-outline"
-              title="Delete"
-              onPress={() => {
-                setMenuFor(null);
-                setToDelete(item);
-              }}
-            />
-          </Menu>
+          <Icon source="chevron-right" size={22} color={COLORS.muted} />
         </Pressable>
       </Animated.View>
     );
@@ -88,7 +44,7 @@ export default function CoursesScreen({ navigation }) {
         data={courses}
         keyExtractor={(item) => item.id}
         renderItem={renderCourse}
-        contentContainerStyle={{ paddingBottom: 110 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={{ marginBottom: 14 }}>
             <ScreenHeader
@@ -102,39 +58,12 @@ export default function CoursesScreen({ navigation }) {
             <ActivityIndicator style={{ marginTop: 40 }} />
           ) : (
             <View style={styles.empty}>
-              <Icon source="book-plus-outline" size={40} color={COLORS.gold} />
+              <Icon source="book-outline" size={40} color={COLORS.gold} />
               <Text style={styles.emptyTitle}>No courses yet</Text>
-              <Text style={styles.emptyText}>Tap “Add course” to create your first one.</Text>
             </View>
           )
         }
       />
-
-      {/* CREATE */}
-      <GradientButton title="Add course" icon="plus" floating style={styles.fab} onPress={() => navigation.navigate('CourseForm')} />
-
-      {/* DELETE confirmation */}
-      <Portal>
-        <Dialog visible={!!toDelete} onDismiss={() => setToDelete(null)} style={{ backgroundColor: COLORS.card }}>
-          <Dialog.Icon icon="alert-outline" />
-          <Dialog.Title style={styles.dialogTitle}>Delete course?</Dialog.Title>
-          <Dialog.Content>
-            <Text style={styles.dialogText}>
-              {toDelete ? getCourseInfo(toDelete).code : ''} and all of its assignments will be deleted.
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setToDelete(null)}>Cancel</Button>
-            <Button onPress={confirmDelete} loading={deleting} textColor="#B3261E">
-              Delete
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      <Snackbar visible={!!message} onDismiss={() => setMessage('')} duration={2500}>
-        {message}
-      </Snackbar>
     </View>
   );
 }
@@ -144,11 +73,12 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     marginHorizontal: 18,
     marginBottom: 10,
     paddingVertical: 14,
     paddingLeft: 20,
-    paddingRight: 4,
+    paddingRight: 12,
     borderRadius: 20,
     backgroundColor: COLORS.card,
     borderWidth: 1,
@@ -162,8 +92,4 @@ const styles = StyleSheet.create({
   meta: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.muted, marginTop: 1 },
   empty: { alignItems: 'center', marginTop: 50, gap: 6 },
   emptyTitle: { fontFamily: FONTS.semibold, fontSize: 16, color: COLORS.maroon },
-  emptyText: { fontFamily: FONTS.regular, color: COLORS.muted },
-  dialogTitle: { textAlign: 'center', fontFamily: FONTS.semibold, color: COLORS.maroon },
-  dialogText: { fontFamily: FONTS.regular, color: COLORS.text },
-  fab: { position: 'absolute', right: 18, bottom: 18 },
 });

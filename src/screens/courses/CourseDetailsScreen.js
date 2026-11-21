@@ -2,7 +2,7 @@
 // Lectures and quizzes are still DUMMY info; each quiz can be practiced with Open Trivia DB.
 import { useLayoutEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Icon, IconButton, Text } from 'react-native-paper';
+import { Icon, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
@@ -32,13 +32,8 @@ export default function CourseDetailsScreen({ route, navigation }) {
   const progress = info.lectures.length ? doneLectures / info.lectures.length : 0;
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      title: '',
-      headerRight: () => (
-        <IconButton icon="pencil-outline" iconColor={COLORS.maroon} onPress={() => navigation.navigate('CourseForm', { course })} />
-      ),
-    });
-  }, [navigation, course]);
+    navigation.setOptions({ title: '' });
+  }, [navigation]);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>

@@ -1,12 +1,10 @@
-// All Firestore operations on the "courses" collection (CRUD).
+// "courses" collection — the default courses of each student (read-only in the app).
 import {
   collection,
   doc,
-  getDocs,
   onSnapshot,
   query,
   serverTimestamp,
-  updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore';
@@ -30,32 +28,6 @@ export function subscribeToCourses(userId, onChange, onError) {
     },
     onError
   );
-}
-
-// CREATE: the new course also gets its default assignment(s).
-export async function addCourse(userId, { title, color }) {
-  const batch = writeBatch(db);
-  const ref = doc(coursesRef);
-  batch.set(ref, { userId, title, color, createdAt: serverTimestamp() });
-  addDefaultAssignments(batch, userId, ref.id, title);
-  await batch.commit();
-}
-
-// UPDATE
-export function updateCourse(courseId, { title, color }) {
-  return updateDoc(doc(db, 'courses', courseId), { title, color });
-}
-
-// DELETE: removes the course with its assignments and the student's submissions for it.
-export async function deleteCourse(userId, courseId) {
-  const byCourse = (name) =>
-    getDocs(query(collection(db, name), where('userId', '==', userId), where('courseId', '==', courseId)));
-  const [assignments, submissions] = await Promise.all([byCourse('assignments'), byCourse('submissions')]);
-  const batch = writeBatch(db);
-  assignments.forEach((a) => batch.delete(a.ref));
-  submissions.forEach((s) => batch.delete(s.ref));
-  batch.delete(doc(db, 'courses', courseId));
-  await batch.commit();
 }
 
 // Called once at sign-up: gives the new student the default CS courses and their assignments.

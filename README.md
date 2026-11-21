@@ -67,7 +67,7 @@ src/
 
 - [x] Firebase auth (register, login, logout, stays logged in)
 - [x] Stack, tab and drawer navigation with placeholder screens
-- [x] Courses CRUD (5 default CS courses created at sign-up)
+- [x] 5 default CS courses created at sign-up (read-only)
 - [x] Home: typing welcome + rotating smart line, centered course carousel (code + CRN) with fading course info, week calendar that expands to the month
 - [x] Course page with full info (dummy lectures/assignments/tests for now)
 - [x] Default assignments for every student (read-only)
