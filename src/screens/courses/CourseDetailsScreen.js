@@ -1,58 +1,273 @@
-// Course details — shows one course; its assignments will be listed here.
+// Course page: everything about one course (DUMMY info for now).
 import { useLayoutEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Button, IconButton, Text } from 'react-native-paper';
-import Placeholder from '../../components/Placeholder';
+import { Icon, IconButton, Text } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { COLORS } from '../../theme';
+import { MONTHS, daysUntil, formatShort, relativeDay } from '../../utils/dates';
+
+function Section({ title, icon, delay = 0, children }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).duration(350)} style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Icon source={icon} size={20} color={COLORS.burgundy} />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      {children}
+    </Animated.View>
+  );
+}
+
+function InfoTile({ icon, label, value }) {
+  return (
+    <View style={styles.tile}>
+      <Icon source={icon} size={18} color={COLORS.gold} />
+      <Text style={styles.tileLabel}>{label}</Text>
+      <Text style={styles.tileValue} numberOfLines={2}>
+        {value}
+      </Text>
+    </View>
+  );
+}
 
 export default function CourseDetailsScreen({ route, navigation }) {
   const { course } = route.params;
+  const info = getCourseInfo(course);
+  const next = info.nextAssignment;
+  const doneLectures = info.lectures.filter((l) => l.done).length;
+  const progress = info.lectures.length ? doneLectures / info.lectures.length : 0;
 
-  // Edit button in the header + course title as the screen title.
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: course.title,
+      title: '',
       headerRight: () => (
         <IconButton
           icon="pencil-outline"
-          iconColor="#FFFFFF"
+          iconColor={COLORS.cream}
           onPress={() => navigation.navigate('CourseForm', { course })}
         />
       ),
     });
-  }, [navigation, course]);
+  }, [navigation, course, info.code]);
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={[styles.banner, { backgroundColor: course.color }]}>
-        <Text variant="headlineSmall" style={styles.bannerTitle}>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* Hero */}
+      <LinearGradient colors={[COLORS.maroon, COLORS.burgundy]} style={styles.hero}>
+        <View style={styles.heroCircle} />
+        <View style={styles.codeRow}>
+          <View style={[styles.colorDot, { backgroundColor: course.color }]} />
+          <Text style={styles.code}>
+            {info.code} · {info.credits} credits
+          </Text>
+        </View>
+        <Text variant="headlineMedium" style={styles.title}>
           {course.title}
         </Text>
-        <Text variant="bodyMedium" style={styles.bannerSub}>
-          {course.instructor ? `Instructor: ${course.instructor}` : 'No instructor added'}
+        <Text style={styles.instructor}>
+          {course.instructor ? course.instructor : 'Tap ✎ to add the instructor'}
         </Text>
-      </View>
 
-      <Placeholder
-        icon="clipboard-text-outline"
-        title="Assignments"
-        description="This course's assignments will be listed here."
-      >
-        <Button
-          mode="outlined"
-          onPress={() =>
-            navigation.navigate('AssignmentDetails', { assignmentTitle: 'Sample assignment' })
-          }
-        >
-          Open a sample assignment
-        </Button>
-      </Placeholder>
+        <View style={styles.progressBox}>
+          <View style={styles.progressTop}>
+            <Text style={styles.progressLabel}>Course progress</Text>
+            <Text style={styles.progressValue}>
+              {doneLectures}/{info.lectures.length} lectures
+            </Text>
+          </View>
+          <View style={styles.track}>
+            <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* Quick info */}
+      <Animated.View entering={FadeInDown.duration(350)} style={styles.tiles}>
+        <InfoTile icon="clock-outline" label="Schedule" value={info.schedule} />
+        <InfoTile icon="map-marker-outline" label="Room" value={info.room} />
+      </Animated.View>
+
+      <Section title="About this course" icon="information-outline" delay={60}>
+        <Text style={styles.body}>{info.description}</Text>
+      </Section>
+
+      {next ? (
+        <Section title="Next deadline" icon="alarm" delay={120}>
+          <View style={styles.deadline}>
+            <View style={styles.deadlineDate}>
+              <Text style={styles.deadlineDay}>{next.dueDate.getDate()}</Text>
+              <Text style={styles.deadlineMonth}>{MONTHS[next.dueDate.getMonth()].slice(0, 3).toUpperCase()}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemTitle}>{next.title}</Text>
+              <Text style={styles.itemMeta}>{next.description}</Text>
+              <Text style={[styles.itemMeta, { color: COLORS.burgundy, fontWeight: 'bold', marginTop: 6 }]}>
+                Due {relativeDay(next.dueDate)} · not submitted
+              </Text>
+            </View>
+          </View>
+        </Section>
+      ) : null}
+
+      <Section title="Lectures" icon="play-box-multiple-outline" delay={180}>
+        {info.lectures.map((l) => (
+          <View key={l.id} style={styles.listRow}>
+            <View style={[styles.listIcon, l.done && { backgroundColor: COLORS.burgundy }]}>
+              <Icon
+                source={l.done ? 'check' : 'play'}
+                size={16}
+                color={l.done ? COLORS.cream : COLORS.burgundy}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemTitle}>{l.title}</Text>
+              <Text style={styles.itemMeta}>
+                {l.week} · {formatShort(l.date)}
+                {!l.done && daysUntil(l.date) >= 0 ? ` · ${relativeDay(l.date)}` : ''}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </Section>
+
+      <Section title="Assignments" icon="clipboard-text-outline" delay={240}>
+        {info.assignments.map((a) => (
+          <View key={a.id} style={styles.listRow}>
+            <View style={styles.listIcon}>
+              <Icon source="clipboard-text-outline" size={16} color={COLORS.burgundy} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemTitle}>{a.title}</Text>
+              <Text style={styles.itemMeta}>Due {formatShort(a.dueDate)}</Text>
+            </View>
+            <View style={[styles.status, a.submitted ? styles.statusDone : styles.statusPending]}>
+              <Text style={[styles.statusText, { color: a.submitted ? '#2F5D3A' : COLORS.maroon }]}>
+                {a.submitted ? 'Submitted' : 'Pending'}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </Section>
+
+      <Section title="Tests & exams" icon="file-document-edit-outline" delay={300}>
+        {info.tests.map((t) => (
+          <View key={t.id} style={styles.listRow}>
+            <View style={[styles.listIcon, { backgroundColor: COLORS.goldLight }]}>
+              <Icon source="pencil-outline" size={16} color={COLORS.caramel} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemTitle}>{t.title}</Text>
+              <Text style={styles.itemMeta}>
+                {t.kind} · {formatShort(t.date)} · {relativeDay(t.date)}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </Section>
+
+      <Section title="Grading" icon="chart-donut" delay={360}>
+        {info.grading.map((g) => (
+          <View key={g.label} style={styles.gradeRow}>
+            <Text style={styles.gradeLabel}>{g.label}</Text>
+            <View style={styles.gradeTrack}>
+              <View style={[styles.gradeFill, { width: `${g.weight}%` }]} />
+            </View>
+            <Text style={styles.gradeValue}>{g.weight}%</Text>
+          </View>
+        ))}
+      </Section>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  banner: { padding: 24, paddingTop: 28, borderBottomWidth: 4, borderBottomColor: COLORS.gold },
-  bannerTitle: { color: '#FFFFFF', fontWeight: 'bold' },
-  bannerSub: { color: 'rgba(255,255,255,0.85)', marginTop: 6 },
+  screen: { flex: 1, backgroundColor: COLORS.cream },
+  hero: {
+    padding: 20,
+    paddingTop: 8,
+    paddingBottom: 56,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  heroCircle: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    right: -70,
+    bottom: -90,
+    backgroundColor: 'rgba(251,246,238,0.07)',
+  },
+  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  colorDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1, borderColor: COLORS.cream },
+  code: { color: COLORS.gold, fontWeight: 'bold', letterSpacing: 1 },
+  title: { color: COLORS.cream, fontWeight: 'bold', marginTop: 8 },
+  instructor: { color: 'rgba(251,246,238,0.8)', marginTop: 4 },
+  progressBox: { marginTop: 18 },
+  progressTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  progressLabel: { color: 'rgba(251,246,238,0.8)', fontSize: 13 },
+  progressValue: { color: COLORS.cream, fontWeight: 'bold', fontSize: 13 },
+  track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(251,246,238,0.2)' },
+  fill: { height: 8, borderRadius: 4, backgroundColor: COLORS.gold },
+  tiles: { flexDirection: 'row', gap: 12, marginHorizontal: 20, marginTop: -36 },
+  tile: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    padding: 14,
+    gap: 4,
+    shadowColor: COLORS.maroon,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  tileLabel: { color: COLORS.muted, fontSize: 12 },
+  tileValue: { color: COLORS.text, fontWeight: 'bold', fontSize: 13 },
+  section: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.creamDark,
+  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionTitle: { color: COLORS.maroon, fontWeight: 'bold', fontSize: 16 },
+  body: { color: COLORS.text, lineHeight: 21 },
+  deadline: { flexDirection: 'row', gap: 14, alignItems: 'center' },
+  deadlineDate: {
+    width: 58,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: COLORS.burgundy,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deadlineDay: { color: COLORS.cream, fontWeight: 'bold', fontSize: 24, lineHeight: 28 },
+  deadlineMonth: { color: COLORS.gold, fontWeight: 'bold', fontSize: 12 },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
+  listIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.burgundyLight,
+  },
+  itemTitle: { color: COLORS.text, fontWeight: '600' },
+  itemMeta: { color: COLORS.muted, fontSize: 12, marginTop: 2 },
+  status: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  statusDone: { backgroundColor: '#E3EEDF' },
+  statusPending: { backgroundColor: COLORS.goldLight },
+  statusText: { fontSize: 12, fontWeight: 'bold' },
+  gradeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  gradeLabel: { width: 90, color: COLORS.text },
+  gradeTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: COLORS.creamDark },
+  gradeFill: { height: 8, borderRadius: 4, backgroundColor: COLORS.burgundy },
+  gradeValue: { width: 36, textAlign: 'right', color: COLORS.muted, fontWeight: 'bold' },
 });

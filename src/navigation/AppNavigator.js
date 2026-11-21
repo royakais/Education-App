@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import MenuButton from '../components/MenuButton';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import HomeScreen from '../screens/home/HomeScreen';
 import CoursesScreen from '../screens/courses/CoursesScreen';
 import CourseDetailsScreen from '../screens/courses/CourseDetailsScreen';
 import CourseFormScreen from '../screens/courses/CourseFormScreen';
@@ -29,6 +30,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import { COLORS, headerOptions } from '../theme';
 
 const AuthStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
 const CoursesStack = createNativeStackNavigator();
 const AssignmentsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,6 +46,37 @@ function AuthNavigator() {
   );
 }
 
+// Screens both the Home and Courses stacks can open.
+function courseScreens(Stack) {
+  return (
+    <>
+      <Stack.Screen name="CourseDetails" component={CourseDetailsScreen} options={{ title: 'Course' }} />
+      <Stack.Screen
+        name="CourseForm"
+        component={CourseFormScreen}
+        options={({ route }) => ({
+          title: route.params?.course ? 'Edit course' : 'New course',
+          presentation: 'modal',
+        })}
+      />
+      <Stack.Screen
+        name="AssignmentDetails"
+        component={AssignmentDetailsScreen}
+        options={{ title: 'Assignment' }}
+      />
+    </>
+  );
+}
+
+function HomeNavigator() {
+  return (
+    <HomeStack.Navigator screenOptions={headerOptions}>
+      <HomeStack.Screen name="Dashboard" component={HomeScreen} options={{ headerShown: false }} />
+      {courseScreens(HomeStack)}
+    </HomeStack.Navigator>
+  );
+}
+
 function CoursesNavigator() {
   return (
     <CoursesStack.Navigator screenOptions={headerOptions}>
@@ -52,24 +85,7 @@ function CoursesNavigator() {
         component={CoursesScreen}
         options={{ title: 'My Courses', headerLeft: () => <MenuButton /> }}
       />
-      <CoursesStack.Screen
-        name="CourseDetails"
-        component={CourseDetailsScreen}
-        options={{ title: 'Course' }}
-      />
-      <CoursesStack.Screen
-        name="CourseForm"
-        component={CourseFormScreen}
-        options={({ route }) => ({
-          title: route.params?.course ? 'Edit course' : 'New course',
-          presentation: 'modal',
-        })}
-      />
-      <CoursesStack.Screen
-        name="AssignmentDetails"
-        component={AssignmentDetailsScreen}
-        options={{ title: 'Assignment' }}
-      />
+      {courseScreens(CoursesStack)}
     </CoursesStack.Navigator>
   );
 }
@@ -95,6 +111,7 @@ function AssignmentsNavigator() {
 function HomeTabs() {
   const theme = useTheme();
   const tabIcons = {
+    Home: 'home-variant-outline',
     Courses: 'book-open-variant',
     Assignments: 'calendar-check',
     Quiz: 'head-question-outline',
@@ -107,11 +124,13 @@ function HomeTabs() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: COLORS.muted,
         tabBarLabelStyle: { fontWeight: '600' },
+        tabBarStyle: { backgroundColor: COLORS.card, borderTopColor: COLORS.creamDark },
         tabBarIcon: ({ color, size }) => (
           <MaterialCommunityIcons name={tabIcons[route.name]} color={color} size={size} />
         ),
       })}
     >
+      <Tab.Screen name="Home" component={HomeNavigator} options={{ headerShown: false }} />
       <Tab.Screen name="Courses" component={CoursesNavigator} options={{ headerShown: false }} />
       <Tab.Screen
         name="Assignments"
@@ -168,9 +187,10 @@ function MainDrawer() {
       }}
     >
       <Drawer.Screen
-        name="Home"
+        name="Main"
         component={HomeTabs}
         options={{
+          drawerLabel: 'Home',
           drawerIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home-outline" color={color} size={size} />
           ),

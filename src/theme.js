@@ -1,16 +1,21 @@
-// App colors: burgundy + gold on a warm cream background.
+// App colors: deep maroon + burgundy on a warm cream background.
 import { DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 import { MD3LightTheme } from 'react-native-paper';
 
 export const COLORS = {
-  burgundy: '#7A1F3D',
-  burgundyDark: '#5C1630',
-  burgundyLight: '#F4DFE5',
-  gold: '#C9A24D',
-  goldLight: '#F6EBCF',
-  cream: '#FBF7F2',
-  text: '#2B1B20',
-  muted: '#7D6B70',
+  maroon: '#540804', // darkest — hero backgrounds, gradients
+  burgundy: '#81171B', // main color — buttons, headers, highlights
+  burgundyDark: '#540804',
+  burgundyLight: '#F4E2DC', // soft tint for selected items
+  gold: '#D4A574', // warm sand accent
+  goldLight: '#F3E4CF',
+  caramel: '#B8743F', // tests on the calendar
+  cream: '#FBF6EE', // app background
+  creamDark: '#F2E8DA', // cards on cream, dividers
+  card: '#FFFCF7',
+  text: '#2A1412',
+  muted: '#86706B',
+  white: '#FFFFFF',
 };
 
 // Theme for React Native Paper components (buttons, inputs, cards, FAB...).
@@ -20,44 +25,45 @@ export const theme = {
   colors: {
     ...MD3LightTheme.colors,
     primary: COLORS.burgundy,
-    onPrimary: '#FFFFFF',
+    onPrimary: COLORS.white,
     primaryContainer: COLORS.burgundyLight,
-    onPrimaryContainer: COLORS.burgundyDark,
+    onPrimaryContainer: COLORS.maroon,
     secondary: COLORS.gold,
-    onSecondary: '#FFFFFF',
+    onSecondary: COLORS.white,
     secondaryContainer: COLORS.goldLight,
-    onSecondaryContainer: '#5A4515',
+    onSecondaryContainer: COLORS.maroon,
     background: COLORS.cream,
-    surface: '#FFFFFF',
-    surfaceVariant: '#F3ECE8',
+    surface: COLORS.card,
+    surfaceVariant: COLORS.creamDark,
     onSurface: COLORS.text,
     onSurfaceVariant: COLORS.muted,
-    outline: '#D8CACD',
+    outline: '#D9C8BC',
     elevation: {
       ...MD3LightTheme.colors.elevation,
-      level1: '#FFFFFF',
-      level2: '#FCF8F5',
-      level3: '#F8F1EE',
+      level1: COLORS.card,
+      level2: '#FDF8F1',
+      level3: '#FAF2E8',
     },
   },
 };
 
-// Theme for React Navigation (screen backgrounds, headers, tab bar).
+// Theme for React Navigation (screen backgrounds, tab bar).
 export const navigationTheme = {
   ...NavigationDefaultTheme,
   colors: {
     ...NavigationDefaultTheme.colors,
     primary: COLORS.burgundy,
     background: COLORS.cream,
-    card: '#FFFFFF',
+    card: COLORS.card,
     text: COLORS.text,
-    border: '#EADFE2',
+    border: '#EADDD0',
   },
 };
 
-// Burgundy header with white title, used by every stack/tab/drawer header.
+// Header used by every stack/tab/drawer screen that shows one.
 export const headerOptions = {
-  headerStyle: { backgroundColor: COLORS.burgundy },
-  headerTintColor: '#FFFFFF',
+  headerStyle: { backgroundColor: COLORS.maroon },
+  headerTintColor: COLORS.cream,
   headerTitleStyle: { fontWeight: 'bold' },
+  headerShadowVisible: false,
 };
