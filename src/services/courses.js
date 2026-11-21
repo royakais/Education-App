@@ -1,21 +1,18 @@
 // All Firestore operations on the "courses" collection (CRUD).
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   onSnapshot,
   query,
   serverTimestamp,
-  Timestamp,
   updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { DEFAULT_COURSES } from '../data/defaultCourses';
-import { getStarterAssignments } from '../data/dummyCourseInfo';
+import { addDefaultAssignments } from './assignments';
 
 const coursesRef = collection(db, 'courses');
 
@@ -35,15 +32,13 @@ export function subscribeToCourses(userId, onChange, onError) {
   );
 }
 
-// CREATE
-export function addCourse(userId, { title, instructor, color }) {
-  return addDoc(coursesRef, {
-    userId,
-    title,
-    instructor: instructor ?? '',
-    color,
-    createdAt: serverTimestamp(),
-  });
+// CREATE: the new course also gets its default assignment(s).
+export async function addCourse(userId, { title, instructor, color }) {
+  const batch = writeBatch(db);
+  const ref = doc(coursesRef);
+  batch.set(ref, { userId, title, instructor: instructor ?? '', color, createdAt: serverTimestamp() });
+  addDefaultAssignments(batch, userId, ref.id, title);
+  await batch.commit();
 }
 
 // UPDATE
@@ -51,57 +46,25 @@ export function updateCourse(courseId, { title, instructor, color }) {
   return updateDoc(doc(db, 'courses', courseId), { title, instructor, color });
 }
 
-// DELETE: removes the course and all of its assignments.
+// DELETE: removes the course with its assignments and the student's submissions for it.
 export async function deleteCourse(userId, courseId) {
-  const assignments = await getDocs(
-    query(
-      collection(db, 'assignments'),
-      where('userId', '==', userId),
-      where('courseId', '==', courseId)
-    )
-  );
+  const byCourse = (name) =>
+    getDocs(query(collection(db, name), where('userId', '==', userId), where('courseId', '==', courseId)));
+  const [assignments, submissions] = await Promise.all([byCourse('assignments'), byCourse('submissions')]);
   const batch = writeBatch(db);
   assignments.forEach((a) => batch.delete(a.ref));
+  submissions.forEach((s) => batch.delete(s.ref));
   batch.delete(doc(db, 'courses', courseId));
   await batch.commit();
 }
 
-// Adds the sample assignments of a course (used at sign-up and from the Assignments tab).
-export function addStarterAssignments(batch, userId, courseId, courseTitle) {
-  getStarterAssignments(courseTitle).forEach((a) => {
-    batch.set(doc(collection(db, 'assignments')), {
-      userId,
-      courseId,
-      title: a.title,
-      description: a.description,
-      dueDate: Timestamp.fromDate(a.dueDate),
-      submitted: a.submitted,
-      ...(a.submitted ? { submittedAt: Timestamp.fromDate(a.submittedAt) } : {}),
-      createdAt: serverTimestamp(),
-    });
-  });
-}
-
-// Called once at sign-up: gives the new student the default CS courses and their sample assignments.
+// Called once at sign-up: gives the new student the default CS courses and their assignments.
 export async function createDefaultCourses(userId) {
   const batch = writeBatch(db);
   DEFAULT_COURSES.forEach((course) => {
     const ref = doc(coursesRef);
-    batch.set(ref, {
-      userId,
-      title: course.title,
-      instructor: '',
-      color: course.color,
-      createdAt: serverTimestamp(),
-    });
-    addStarterAssignments(batch, userId, ref.id, course.title);
+    batch.set(ref, { userId, title: course.title, instructor: '', color: course.color, createdAt: serverTimestamp() });
+    addDefaultAssignments(batch, userId, ref.id, course.title);
   });
-  await batch.commit();
-}
-
-// For accounts made before assignments existed: adds sample assignments to the student's courses.
-export async function createStarterAssignmentsFor(userId, courses) {
-  const batch = writeBatch(db);
-  courses.forEach((c) => addStarterAssignments(batch, userId, c.id, c.title));
   await batch.commit();
 }

@@ -1,24 +1,44 @@
-// Live list of the logged-in student's assignments from Firestore.
-import { useEffect, useState } from 'react';
+// Live assignments + the student's submissions, merged:
+// each assignment gets `submission` (or null), `submitted` and `submittedAt`.
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToAssignments } from '../services/assignments';
+import { subscribeToSubmissions } from '../services/submissions';
 
 export function useAssignments() {
   const { user } = useAuth();
-  const [assignments, setAssignments] = useState([]);
+  const [rawAssignments, setRawAssignments] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = subscribeToAssignments(
+    const stopA = subscribeToAssignments(
       user.uid,
       (data) => {
-        setAssignments(data);
+        setRawAssignments(data);
         setLoading(false);
       },
       () => setLoading(false)
     );
-    return unsubscribe;
+    const stopS = subscribeToSubmissions(user.uid, setSubmissions, () => {});
+    return () => {
+      stopA();
+      stopS();
+    };
   }, [user.uid]);
 
-  return { assignments, loading };
+  const assignments = useMemo(() => {
+    const byAssignment = Object.fromEntries(submissions.map((s) => [s.assignmentId, s]));
+    return rawAssignments.map((a) => {
+      const submission = byAssignment[a.id] ?? null;
+      return {
+        ...a,
+        submission,
+        submitted: !!submission,
+        submittedAt: submission ? submission.updatedAt ?? submission.createdAt ?? new Date() : null,
+      };
+    });
+  }, [rawAssignments, submissions]);
+
+  return { assignments, submissions, loading };
 }

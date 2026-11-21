@@ -1,13 +1,13 @@
-// Assignments tab — READ: every assignment, live from Firestore, with filters.
+// Assignments tab — every default assignment with its submission status (live from Firestore).
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, FAB, Icon, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Icon, Text } from 'react-native-paper';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useAssignments } from '../../hooks/useAssignments';
 import { useCourses } from '../../hooks/useCourses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
-import { createStarterAssignmentsFor } from '../../services/courses';
+import { createDefaultAssignmentsFor } from '../../services/assignments';
 import ScreenHeader from '../../components/ScreenHeader';
 import { COLORS, FONTS } from '../../theme';
 import { daysUntil, formatDayMonth, relativeDay } from '../../utils/dates';
@@ -37,7 +37,7 @@ export default function AssignmentsScreen({ navigation }) {
   const seed = async () => {
     setSeeding(true);
     try {
-      await createStarterAssignmentsFor(user.uid, courses);
+      await createDefaultAssignmentsFor(user.uid, courses);
     } finally {
       setSeeding(false);
     }
@@ -85,7 +85,7 @@ export default function AssignmentsScreen({ navigation }) {
           data={list}
           keyExtractor={(a) => a.id}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 110 }}
+          contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 40 }}
           ListHeaderComponent={
             <View style={{ marginHorizontal: -18, marginBottom: 14 }}>
               <ScreenHeader eyebrow={`${assignments.filter((a) => !a.submitted && courseById[a.courseId]).length} TO DO`} title="Assignments" />
@@ -110,7 +110,7 @@ export default function AssignmentsScreen({ navigation }) {
               </Text>
               {assignments.length === 0 && courses.length > 0 ? (
                 <Button mode="outlined" icon="auto-fix" onPress={seed} loading={seeding} style={{ marginTop: 8 }}>
-                  Add sample assignments
+                  Load my assignments
                 </Button>
               ) : null}
             </View>
@@ -118,14 +118,6 @@ export default function AssignmentsScreen({ navigation }) {
         />
       )}
 
-      {/* CREATE */}
-      <FAB
-        icon="plus"
-        label="Add"
-        color={COLORS.cream}
-        style={styles.fab}
-        onPress={() => navigation.navigate('AssignmentForm')}
-      />
     </View>
   );
 }

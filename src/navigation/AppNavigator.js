@@ -24,7 +24,7 @@ import CourseDetailsScreen from '../screens/courses/CourseDetailsScreen';
 import CourseFormScreen from '../screens/courses/CourseFormScreen';
 import AssignmentsScreen from '../screens/assignments/AssignmentsScreen';
 import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScreen';
-import AssignmentFormScreen from '../screens/assignments/AssignmentFormScreen';
+import ReminderSync from '../components/ReminderSync';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -64,14 +64,6 @@ function courseScreens(Stack) {
         name="AssignmentDetails"
         component={AssignmentDetailsScreen}
         options={{ title: 'Assignment' }}
-      />
-      <Stack.Screen
-        name="AssignmentForm"
-        component={AssignmentFormScreen}
-        options={({ route }) => ({
-          title: route.params?.assignment ? 'Edit assignment' : 'New assignment',
-          presentation: 'modal',
-        })}
       />
     </>
   );
@@ -240,7 +232,14 @@ export default function AppNavigator() {
     );
   }
 
-  return user ? <MainDrawer /> : <AuthNavigator />;
+  return user ? (
+    <>
+      <ReminderSync />
+      <MainDrawer />
+    </>
+  ) : (
+    <AuthNavigator />
+  );
 }
 
 const styles = StyleSheet.create({

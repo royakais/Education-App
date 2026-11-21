@@ -2,6 +2,13 @@
 // Dates are written as "days from today" so the demo always looks current.
 import { addDays, daysUntil } from '../utils/dates';
 
+// Deadlines are at 23:59 on the due day.
+function dueAt(offset) {
+  const d = addDays(offset);
+  d.setHours(23, 59, 0, 0);
+  return d;
+}
+
 const CATALOG = {
   'Mobile App Development': {
     code: 'CSC457',
@@ -17,7 +24,7 @@ const CATALOG = {
       [2, 'Week 11', 'Native features with the Expo SDK'],
     ],
     assignments: [
-      [-9, 'Project 1: REST API + React SPA', 'Node/Express API with a React single-page client.', -10],
+      [12, 'Lab: Expo native features', 'Use four Expo SDK features in a small demo app and record a short video.', null],
       [2, 'Project 2: React Native app', 'Expo app with Firebase auth, Firestore CRUD, 3 navigators, 4 native features and a public API.', null],
     ],
     tests: [[18, 'Project 2 presentation', 'Presentation']],
@@ -35,7 +42,7 @@ const CATALOG = {
       [-1, 'Week 11', 'Firewalls and intrusion detection'],
     ],
     assignments: [
-      [-6, 'Lab 4: Hashing and salting', 'Store and verify passwords with bcrypt and compare with plain SHA-256.', -7],
+      [11, 'Lab 6: VPN setup', 'Configure a site-to-site VPN between the lab VMs and capture the traffic.', null],
       [4, 'Lab 5: Firewall rules', 'Write iptables rules for the given network scenario and document each rule.', null],
     ],
     tests: [[10, 'Quiz 3: Network security', 'Quiz']],
@@ -53,7 +60,7 @@ const CATALOG = {
       [-2, 'Week 11', 'Interactive dashboards'],
     ],
     assignments: [
-      [-3, 'Homework 4: Cleaning a dataset', 'Handle missing values and outliers in the housing dataset.', -4],
+      [13, 'Homework 6: Dashboard', 'Build an interactive dashboard with three linked charts.', null],
       [5, 'Homework 5: Visual story', 'Build 4 charts that tell one story about the dataset of your choice.', null],
     ],
     tests: [[12, 'Quiz 2: Visualization', 'Quiz']],
@@ -71,7 +78,7 @@ const CATALOG = {
       [-1, 'Week 11', 'Eigenvalues and eigenvectors'],
     ],
     assignments: [
-      [-5, 'Problem set 5', 'Exercises 4.1 – 4.4 on vector spaces.', -5],
+      [14, 'Problem set 7', 'Exercises 6.1 – 6.3 on orthogonality and projections.', null],
       [7, 'Problem set 6', 'Exercises 5.1 – 5.3 on eigenvalues and diagonalization.', null],
     ],
     tests: [[6, 'Quiz 3: Eigenvalues', 'Quiz']],
@@ -88,7 +95,7 @@ const CATALOG = {
       [0, 'Week 11', 'Distributed consensus'],
     ],
     assignments: [
-      [-7, 'Lab 3: OpenMP loops', 'Parallelize the matrix loops and measure the speed-up.', -8],
+      [16, 'Lab 5: Distributed consensus', 'Simulate Raft leader election with 5 nodes and report what happens.', null],
       [9, 'Lab 4: MPI matrix multiplication', 'Split the matrices across processes and gather the result.', null],
     ],
     tests: [[14, 'Midterm exam', 'Exam']],
@@ -116,16 +123,13 @@ const GRADING = [
   { label: 'Final', weight: 30 },
 ];
 
-// Sample assignments for a course (written to Firestore at sign-up).
+// The default assignments of a course (written to Firestore for every student; read-only in the app).
 export function getStarterAssignments(courseTitle) {
-  const raw = CATALOG[courseTitle];
-  if (!raw) return [];
-  return raw.assignments.map(([offset, title, description, submittedOffset]) => ({
+  const raw = CATALOG[courseTitle] ?? GENERIC;
+  return raw.assignments.map(([offset, title, description]) => ({
     title,
     description,
-    dueDate: addDays(offset),
-    submitted: submittedOffset !== null,
-    submittedAt: submittedOffset !== null ? addDays(submittedOffset) : null,
+    dueDate: dueAt(offset),
   }));
 }
 
@@ -153,7 +157,7 @@ export function getCourseInfo(course, assignments = null) {
       type: 'assignment',
       title,
       description,
-      dueDate: addDays(offset),
+      dueDate: dueAt(offset),
       submitted: submittedOffset !== null,
       submittedAt: submittedOffset !== null ? addDays(submittedOffset) : null,
     }))

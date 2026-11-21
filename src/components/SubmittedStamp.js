@@ -1,10 +1,9 @@
-// NATIVE FEATURE: Sensor (expo-sensors Accelerometer) + Haptics (expo-haptics).
-// A "SUBMITTED" stamp that drops in with a vibration, then tilts and floats with the phone's movement.
+// NATIVE FEATURE: Sensor (expo-sensors Accelerometer).
+// A "SUBMITTED" stamp that drops in, then tilts and floats with the phone's movement.
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
 import { Accelerometer } from 'expo-sensors';
-import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -26,16 +25,26 @@ export default function SubmittedStamp({ submittedAt, celebrate }) {
     if (celebrate) {
       opacity.value = withTiming(1, { duration: 200 });
       scale.value = withSequence(withSpring(0.9, { damping: 8 }), withSpring(1));
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
     // Accelerometer: x/y are about -1…1 depending on how the phone is tilted.
-    Accelerometer.setUpdateInterval(60);
-    const sub = Accelerometer.addListener(({ x, y }) => {
-      tiltX.value = withSpring(x * 18, { damping: 12 });
-      tiltY.value = withSpring(y * 12, { damping: 12 });
-    });
-    return () => sub.remove();
+    // Only used if the device has the sensor (it's missing on web and some emulators).
+    let sub = null;
+    let cancelled = false;
+    Accelerometer.isAvailableAsync()
+      .then((available) => {
+        if (!available || cancelled) return;
+        Accelerometer.setUpdateInterval(60);
+        sub = Accelerometer.addListener(({ x, y }) => {
+          tiltX.value = withSpring(x * 18, { damping: 12 });
+          tiltY.value = withSpring(y * 12, { damping: 12 });
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      sub?.remove();
+    };
   }, [celebrate]);
 
   const stampStyle = useAnimatedStyle(() => ({

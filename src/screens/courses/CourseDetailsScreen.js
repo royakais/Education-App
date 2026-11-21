@@ -165,13 +165,6 @@ export default function CourseDetailsScreen({ route, navigation }) {
             </View>
           </Pressable>
         ))}
-        <Pressable
-          style={styles.addRow}
-          onPress={() => navigation.navigate('AssignmentForm', { courseId: course.id })}
-        >
-          <Icon source="plus" size={18} color={COLORS.burgundy} />
-          <Text style={styles.addText}>Add assignment</Text>
-        </Pressable>
       </Section>
 
       <Section title="Tests & exams" icon="file-document-edit-outline" delay={300}>
@@ -289,19 +282,6 @@ const styles = StyleSheet.create({
   statusDone: { backgroundColor: '#E3EEDF' },
   statusPending: { backgroundColor: COLORS.goldLight },
   statusText: { fontSize: 12, fontFamily: FONTS.semibold },
-  addRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 8,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(129,23,27,0.3)',
-  },
-  addText: { color: COLORS.burgundy, fontFamily: FONTS.semibold },
   gradeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   gradeLabel: { width: 90, color: COLORS.text },
   gradeTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: COLORS.creamDark },

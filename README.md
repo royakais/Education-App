@@ -23,7 +23,8 @@ Scan the QR code with **Expo Go** on your phone, or press `a` to open it in the 
 ```
 users/{uid}         name, email, createdAt
 courses/{id}        userId, title, instructor, color
-assignments/{id}    userId, courseId, title, description, dueDate, submitted, submittedAt, imageBase64 (optional)
+assignments/{id}    userId, courseId, title, description, dueDate        (default, read-only)
+submissions/{uid_assignmentId}  userId, assignmentId, courseId, images[] (base64), createdAt, updatedAt
 ```
 
 ## Project structure
@@ -34,7 +35,8 @@ firebaseConfig.js           Firebase app, auth and Firestore
 src/
   context/AuthContext.js    register / login / logout
   services/courses.js       Firestore CRUD for courses
-  services/assignments.js   Firestore CRUD for assignments (+ submit)
+  services/assignments.js   default assignments (read + seeding)
+  services/submissions.js   Firestore CRUD for submissions
   native/                   camera, calendar, notifications, share (native features)
   hooks/useCourses.js       live course list
   data/dummyCourseInfo.js   DUMMY lectures, assignments, tests (dates relative to today)
@@ -68,11 +70,13 @@ src/
 - [x] Courses CRUD (5 default CS courses created at sign-up)
 - [x] Home: typing welcome + rotating smart line, centered course carousel (code + CRN) with fading course info, week calendar that expands to the month
 - [x] Course page with full info (dummy lectures/assignments/tests for now)
-- [x] Assignments CRUD (Firestore): add / list / edit / delete, submit with a photo
+- [x] Default assignments for every student (read-only)
+- [x] Submissions CRUD (Firestore): create with several photos, view, edit (add / remove / replace photos), delete
 - [x] Native features (Expo SDK):
-  - Camera — `expo-image-picker` + `expo-image-manipulator` (photo compressed to base64)
-  - Sensor — `expo-sensors` Accelerometer tilts the "SUBMITTED" stamp, `expo-haptics` vibrates on submit
+  - Camera — `expo-image-picker` (camera + multi-select gallery) + `expo-image-manipulator` (compressed to base64)
+  - Sensor — `expo-sensors` Accelerometer tilts the "SUBMITTED" stamp
+  - Vibration — React Native `Vibration` long pattern on submit (+ `expo-haptics`)
   - Calendar — `expo-calendar` adds the due date to the phone's calendar
-  - Notifications — `expo-notifications` local reminder the day before (remote push isn't available in Expo Go)
+  - Notifications — `expo-notifications`: reminders 24 h, 6 h and 2 h before each deadline, cancelled on submit; "Test reminders" demo fires them in 5/10/15 s (local notifications, since remote push isn't available in Expo Go)
   - Share to WhatsApp — React Native `Linking` (`whatsapp://send`) with `Share` as fallback
 - [ ] Open Trivia DB quiz

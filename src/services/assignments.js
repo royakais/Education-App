@@ -1,24 +1,11 @@
-// All Firestore operations on the "assignments" collection (CRUD + submit).
-import {
-  Timestamp,
-  addDoc,
-  collection,
-  deleteDoc,
-  deleteField,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+// "assignments" collection — DEFAULT assignments, created for every student, read-only in the app.
+// (The student's CRUD entity is the submission: see services/submissions.js.)
+import { Timestamp, collection, doc, onSnapshot, query, serverTimestamp, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
+import { getStarterAssignments } from '../data/dummyCourseInfo';
 
 const assignmentsRef = collection(db, 'assignments');
-
-// Firestore Timestamp → JS Date (and back).
 const toDate = (v) => (v?.toDate ? v.toDate() : v ? new Date(v) : null);
-const toTimestamp = (d) => Timestamp.fromDate(d instanceof Date ? d : new Date(d));
 
 // READ: live list of the student's assignments, nearest due date first.
 export function subscribeToAssignments(userId, onChange, onError) {
@@ -28,13 +15,7 @@ export function subscribeToAssignments(userId, onChange, onError) {
     (snapshot) => {
       const list = snapshot.docs.map((d) => {
         const data = d.data();
-        return {
-          id: d.id,
-          ...data,
-          dueDate: toDate(data.dueDate),
-          submittedAt: toDate(data.submittedAt),
-          createdAt: toDate(data.createdAt),
-        };
+        return { id: d.id, userId: data.userId, courseId: data.courseId, title: data.title, description: data.description, dueDate: toDate(data.dueDate) };
       });
       list.sort((a, b) => (a.dueDate ?? 0) - (b.dueDate ?? 0));
       onChange(list);
@@ -43,48 +24,23 @@ export function subscribeToAssignments(userId, onChange, onError) {
   );
 }
 
-// CREATE
-export function addAssignment(userId, { courseId, title, description, dueDate }) {
-  return addDoc(assignmentsRef, {
-    userId,
-    courseId,
-    title,
-    description: description ?? '',
-    dueDate: toTimestamp(dueDate),
-    submitted: false,
-    createdAt: serverTimestamp(),
+// Adds a course's default assignments to a write batch.
+export function addDefaultAssignments(batch, userId, courseId, courseTitle) {
+  getStarterAssignments(courseTitle).forEach((a) => {
+    batch.set(doc(assignmentsRef), {
+      userId,
+      courseId,
+      title: a.title,
+      description: a.description,
+      dueDate: Timestamp.fromDate(a.dueDate),
+      createdAt: serverTimestamp(),
+    });
   });
 }
 
-// UPDATE (details)
-export function updateAssignment(id, { courseId, title, description, dueDate }) {
-  return updateDoc(doc(db, 'assignments', id), {
-    courseId,
-    title,
-    description: description ?? '',
-    dueDate: toTimestamp(dueDate),
-  });
-}
-
-// UPDATE (submit): saves the compressed photo and marks it submitted.
-export function submitAssignment(id, imageBase64) {
-  return updateDoc(doc(db, 'assignments', id), {
-    imageBase64,
-    submitted: true,
-    submittedAt: serverTimestamp(),
-  });
-}
-
-// UPDATE (undo submit)
-export function removeSubmission(id) {
-  return updateDoc(doc(db, 'assignments', id), {
-    imageBase64: deleteField(),
-    submitted: false,
-    submittedAt: deleteField(),
-  });
-}
-
-// DELETE
-export function deleteAssignment(id) {
-  return deleteDoc(doc(db, 'assignments', id));
+// For accounts that don't have assignments yet: creates the defaults for their courses.
+export async function createDefaultAssignmentsFor(userId, courses) {
+  const batch = writeBatch(db);
+  courses.forEach((c) => addDefaultAssignments(batch, userId, c.id, c.title));
+  await batch.commit();
 }
