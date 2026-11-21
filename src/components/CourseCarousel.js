@@ -7,7 +7,9 @@ import { Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Animated, {
+  Easing,
   Extrapolation,
+  FadeInDown,
   interpolate,
   useAnimatedReaction,
   useAnimatedRef,
@@ -143,14 +145,11 @@ export default function CourseCarousel({ items, onOpenCourse, onIndexChange }) {
     }
   );
 
-  // Info fades and drops while between two cards, and is fully visible when a card is centered.
+  // Info fades out while between two cards and is fully visible when a card is centered.
   const infoStyle = useAnimatedStyle(() => {
     const p = scrollX.value / itemWidth;
     const distance = Math.abs(p - Math.round(p)); // 0 = centered, 0.5 = halfway
-    return {
-      opacity: interpolate(distance, [0, 0.35], [1, 0], Extrapolation.CLAMP),
-      transform: [{ translateY: interpolate(distance, [0, 0.35], [0, 14], Extrapolation.CLAMP) }],
-    };
+    return { opacity: interpolate(distance, [0, 0.35], [1, 0], Extrapolation.CLAMP) };
   });
 
   const goTo = (i) => {
@@ -195,7 +194,13 @@ export default function CourseCarousel({ items, onOpenCourse, onIndexChange }) {
       </View>
 
       <Animated.View style={infoStyle}>
-        <CourseInfo item={items[safeIndex]} onOpen={() => onOpenCourse(items[safeIndex].course)} />
+        {/* Re-mounts for every new course → smooth fade-in that rises into place. */}
+        <Animated.View
+          key={items[safeIndex].course.id}
+          entering={FadeInDown.duration(650).easing(Easing.out(Easing.cubic))}
+        >
+          <CourseInfo item={items[safeIndex]} onOpen={() => onOpenCourse(items[safeIndex].course)} />
+        </Animated.View>
       </Animated.View>
     </View>
   );
