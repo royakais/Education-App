@@ -5,7 +5,7 @@
 //   Delete — Delete submission
 // Plus native actions: calendar, reminders (with a demo button), WhatsApp share.
 import { useLayoutEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ActivityIndicator, Button, Dialog, Icon, Portal, Snackbar, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn } from 'react-native-reanimated';
@@ -54,6 +54,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [viewer, setViewer] = useState(null); // photo opened full screen
   const [message, setMessage] = useState('');
+  const [messageAction, setMessageAction] = useState(null); // optional button on the snackbar
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: code });
@@ -64,6 +65,12 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
     try {
       await fn();
     } catch (e) {
+      // If Android blocked notifications/permissions, offer a shortcut to the app's settings.
+      setMessageAction(
+        e.code === 'notifications-blocked' || /permission/i.test(e.message)
+          ? { label: 'Settings', onPress: () => Linking.openSettings() }
+          : null
+      );
       setMessage(e.message);
     } finally {
       setBusy(null);
@@ -134,13 +141,19 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   // ---------- other native actions ----------
   const addToCalendar = () =>
     run('calendar', async () => {
-      const when = await addAssignmentToCalendar(info);
-      setMessage(`Added to your calendar for ${formatDayMonth(when)} ✓`);
+      const result = await addAssignmentToCalendar(info);
+      setMessageAction(null);
+      setMessage(
+        result.mode === 'added'
+          ? `Added to your calendar for ${formatDayMonth(result.when)} ✓`
+          : 'Opened your calendar — tap Save to add it ✓'
+      );
     });
   const demo = () =>
     run('demo', async () => {
       await scheduleDemoReminders(assignment, code);
-      setMessage('Demo: 3 reminders in 5, 10 and 15 seconds 🔔');
+      setMessageAction(null);
+      setMessage('Demo: 3 reminders in 5, 10 and 15 seconds 🔔 — lock your phone to see them');
     });
   const share = () => run('share', () => shareAssignmentOnWhatsApp({ ...info, submitted: assignment.submitted }));
 
@@ -320,7 +333,12 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
         ) : null}
       </Portal>
 
-      <Snackbar visible={!!message} onDismiss={() => setMessage('')} duration={3000}>
+      <Snackbar
+        visible={!!message}
+        onDismiss={() => setMessage('')}
+        duration={messageAction ? 6000 : 3500}
+        action={messageAction ?? undefined}
+      >
         {message}
       </Snackbar>
     </View>

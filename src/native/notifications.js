@@ -24,8 +24,18 @@ Notifications.setNotificationHandler({
 
 let permissionAsked = false;
 
-async function ensurePermission() {
+// Error shown when Android has notifications turned off for the app.
+export class NotificationsBlockedError extends Error {
+  constructor() {
+    super('Notifications are turned off for Expo Go. Turn them on in Settings.');
+    this.code = 'notifications-blocked';
+  }
+}
+
+// interactive = the student tapped a button, so we may show the permission prompt again.
+async function ensurePermission(interactive = false) {
   if (Platform.OS === 'android') {
+    // On Android 13+ the channel must exist before asking, or the prompt may not appear.
     await Notifications.setNotificationChannelAsync('reminders', {
       name: 'Assignment reminders',
       importance: Notifications.AndroidImportance.HIGH,
@@ -35,7 +45,8 @@ async function ensurePermission() {
   }
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
-  if (permissionAsked) return false;
+  if (!current.canAskAgain) return false; // blocked: only the Settings app can turn it back on
+  if (permissionAsked && !interactive) return false;
   permissionAsked = true;
   const asked = await Notifications.requestPermissionsAsync();
   return asked.granted;
@@ -95,7 +106,7 @@ export function upcomingReminders(assignment) {
 
 // DEMO for the presentation: the same 3 reminders, but 5, 10 and 15 seconds from now.
 export async function scheduleDemoReminders(assignment, courseCode) {
-  if (!(await ensurePermission())) throw new Error('Notification permission was denied.');
+  if (!(await ensurePermission(true))) throw new NotificationsBlockedError();
   for (const [i, r] of REMINDERS.entries()) {
     await Notifications.scheduleNotificationAsync({
       content: reminderContent(assignment, courseCode, r.label),
