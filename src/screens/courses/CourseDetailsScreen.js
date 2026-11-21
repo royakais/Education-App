@@ -1,10 +1,12 @@
-// Course page: everything about one course (DUMMY info for now).
+// Course page: everything about one course. Assignments are real (Firestore);
+// schedule, lectures and tests are still DUMMY info.
 import { useLayoutEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon, IconButton, Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
+import { useAssignments } from '../../hooks/useAssignments';
 import { COLORS } from '../../theme';
 import { MONTHS, daysUntil, formatShort, relativeDay } from '../../utils/dates';
 
@@ -34,7 +36,8 @@ function InfoTile({ icon, label, value }) {
 
 export default function CourseDetailsScreen({ route, navigation }) {
   const { course } = route.params;
-  const info = getCourseInfo(course);
+  const { assignments } = useAssignments();
+  const info = getCourseInfo(course, assignments);
   const next = info.nextAssignment;
   const doneLectures = info.lectures.filter((l) => l.done).length;
   const progress = info.lectures.length ? doneLectures / info.lectures.length : 0;
@@ -95,7 +98,10 @@ export default function CourseDetailsScreen({ route, navigation }) {
 
       {next ? (
         <Section title="Next deadline" icon="alarm" delay={120}>
-          <View style={styles.deadline}>
+          <Pressable
+            style={styles.deadline}
+            onPress={() => navigation.navigate('AssignmentDetails', { assignmentId: next.id })}
+          >
             <View style={styles.deadlineDate}>
               <Text style={styles.deadlineDay}>{next.dueDate.getDate()}</Text>
               <Text style={styles.deadlineMonth}>{MONTHS[next.dueDate.getMonth()].slice(0, 3).toUpperCase()}</Text>
@@ -107,7 +113,7 @@ export default function CourseDetailsScreen({ route, navigation }) {
                 Due {relativeDay(next.dueDate)} · not submitted
               </Text>
             </View>
-          </View>
+          </Pressable>
         </Section>
       ) : null}
 
@@ -133,10 +139,17 @@ export default function CourseDetailsScreen({ route, navigation }) {
       </Section>
 
       <Section title="Assignments" icon="clipboard-text-outline" delay={240}>
+        {info.assignments.length === 0 ? (
+          <Text style={styles.itemMeta}>No assignments yet.</Text>
+        ) : null}
         {info.assignments.map((a) => (
-          <View key={a.id} style={styles.listRow}>
+          <Pressable
+            key={a.id}
+            style={styles.listRow}
+            onPress={() => navigation.navigate('AssignmentDetails', { assignmentId: a.id })}
+          >
             <View style={styles.listIcon}>
-              <Icon source="clipboard-text-outline" size={16} color={COLORS.burgundy} />
+              <Icon source={a.submitted ? 'check' : 'clipboard-text-outline'} size={16} color={COLORS.burgundy} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.itemTitle}>{a.title}</Text>
@@ -147,8 +160,15 @@ export default function CourseDetailsScreen({ route, navigation }) {
                 {a.submitted ? 'Submitted' : 'Pending'}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
+        <Pressable
+          style={styles.addRow}
+          onPress={() => navigation.navigate('AssignmentForm', { courseId: course.id })}
+        >
+          <Icon source="plus" size={18} color={COLORS.burgundy} />
+          <Text style={styles.addText}>Add assignment</Text>
+        </Pressable>
       </Section>
 
       <Section title="Tests & exams" icon="file-document-edit-outline" delay={300}>
@@ -265,6 +285,19 @@ const styles = StyleSheet.create({
   statusDone: { backgroundColor: '#E3EEDF' },
   statusPending: { backgroundColor: COLORS.goldLight },
   statusText: { fontSize: 12, fontWeight: 'bold' },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(129,23,27,0.3)',
+  },
+  addText: { color: COLORS.burgundy, fontWeight: 'bold' },
   gradeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   gradeLabel: { width: 90, color: COLORS.text },
   gradeTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: COLORS.creamDark },

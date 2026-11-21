@@ -18,6 +18,7 @@ import Animated, {
 
 import { useAuth } from '../../context/AuthContext';
 import { useCourses } from '../../hooks/useCourses';
+import { useAssignments } from '../../hooks/useAssignments';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import CourseCarousel from '../../components/CourseCarousel';
 import WeekCalendar from '../../components/WeekCalendar';
@@ -115,6 +116,7 @@ function WelcomeCard({ firstName, messages }) {
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const { courses, loading } = useCourses();
+  const { assignments } = useAssignments();
   const insets = useSafeAreaInsets();
   const [active, setActive] = useState(0);
   const firstName = (user?.displayName || 'Student').split(' ')[0];
@@ -129,10 +131,10 @@ export default function HomeScreen({ navigation }) {
 
   // Course + its (dummy) info, nearest deadline first.
   const items = useMemo(() => {
-    const list = courses.map((course) => ({ course, info: getCourseInfo(course) }));
+    const list = courses.map((course) => ({ course, info: getCourseInfo(course, assignments) }));
     const due = (x) => (x.info.nextAssignment ? x.info.nextAssignment.dueDate.getTime() : Infinity);
     return list.sort((a, b) => due(a) - due(b));
-  }, [courses]);
+  }, [courses, assignments]);
 
   const events = useMemo(
     () =>
@@ -216,7 +218,14 @@ export default function HomeScreen({ navigation }) {
 
       {/* Calendar */}
       <View style={styles.calendar}>
-        <WeekCalendar events={events} onEventPress={(e) => openCourse(e.course)} />
+        <WeekCalendar
+          events={events}
+          onEventPress={(e) =>
+            e.type === 'assignment'
+              ? navigation.navigate('AssignmentDetails', { assignmentId: e.id })
+              : openCourse(e.course)
+          }
+        />
       </View>
     </ScrollView>
   );

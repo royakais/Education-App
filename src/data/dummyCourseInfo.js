@@ -116,8 +116,22 @@ const GRADING = [
   { label: 'Final', weight: 30 },
 ];
 
+// Sample assignments for a course (written to Firestore at sign-up).
+export function getStarterAssignments(courseTitle) {
+  const raw = CATALOG[courseTitle];
+  if (!raw) return [];
+  return raw.assignments.map(([offset, title, description, submittedOffset]) => ({
+    title,
+    description,
+    dueDate: addDays(offset),
+    submitted: submittedOffset !== null,
+    submittedAt: submittedOffset !== null ? addDays(submittedOffset) : null,
+  }));
+}
+
 // Returns everything the screens need about a course, with real Date objects.
-export function getCourseInfo(course) {
+// `assignments` = the student's real assignments from Firestore (replaces the dummy ones).
+export function getCourseInfo(course, assignments = null) {
   const raw = CATALOG[course.title] ?? GENERIC;
 
   const lectures = raw.lectures.map(([offset, week, title], i) => ({
@@ -128,7 +142,12 @@ export function getCourseInfo(course) {
     done: offset < 0,
   }));
 
-  const assignments = raw.assignments
+  const courseAssignments = assignments
+    ? assignments
+        .filter((a) => a.courseId === course.id && a.dueDate)
+        .map((a) => ({ ...a, type: 'assignment' }))
+        .sort((a, b) => a.dueDate - b.dueDate)
+    : raw.assignments
     .map(([offset, title, description, submittedOffset], i) => ({
       id: `a${i}`,
       type: 'assignment',
@@ -150,7 +169,7 @@ export function getCourseInfo(course) {
 
   // The closest assignment that is not submitted and not past due.
   const nextAssignment =
-    assignments.find((a) => !a.submitted && daysUntil(a.dueDate) >= 0) ?? null;
+    courseAssignments.find((a) => !a.submitted && daysUntil(a.dueDate) >= 0) ?? null;
 
   // Most recent lectures first (only ones that already happened).
   const recentLectures = lectures
@@ -162,7 +181,7 @@ export function getCourseInfo(course) {
     instructor: course.instructor || 'Instructor not set',
     credits: 3,
     lectures,
-    assignments,
+    assignments: courseAssignments,
     tests,
     nextAssignment,
     recentLectures,

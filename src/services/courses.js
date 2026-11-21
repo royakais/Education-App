@@ -8,12 +8,14 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { DEFAULT_COURSES } from '../data/defaultCourses';
+import { getStarterAssignments } from '../data/dummyCourseInfo';
 
 const coursesRef = collection(db, 'courses');
 
@@ -64,17 +66,42 @@ export async function deleteCourse(userId, courseId) {
   await batch.commit();
 }
 
-// Called once at sign-up: gives the new student the default CS courses.
+// Adds the sample assignments of a course (used at sign-up and from the Assignments tab).
+export function addStarterAssignments(batch, userId, courseId, courseTitle) {
+  getStarterAssignments(courseTitle).forEach((a) => {
+    batch.set(doc(collection(db, 'assignments')), {
+      userId,
+      courseId,
+      title: a.title,
+      description: a.description,
+      dueDate: Timestamp.fromDate(a.dueDate),
+      submitted: a.submitted,
+      ...(a.submitted ? { submittedAt: Timestamp.fromDate(a.submittedAt) } : {}),
+      createdAt: serverTimestamp(),
+    });
+  });
+}
+
+// Called once at sign-up: gives the new student the default CS courses and their sample assignments.
 export async function createDefaultCourses(userId) {
   const batch = writeBatch(db);
   DEFAULT_COURSES.forEach((course) => {
-    batch.set(doc(coursesRef), {
+    const ref = doc(coursesRef);
+    batch.set(ref, {
       userId,
       title: course.title,
       instructor: '',
       color: course.color,
       createdAt: serverTimestamp(),
     });
+    addStarterAssignments(batch, userId, ref.id, course.title);
   });
+  await batch.commit();
+}
+
+// For accounts made before assignments existed: adds sample assignments to the student's courses.
+export async function createStarterAssignmentsFor(userId, courses) {
+  const batch = writeBatch(db);
+  courses.forEach((c) => addStarterAssignments(batch, userId, c.id, c.title));
   await batch.commit();
 }

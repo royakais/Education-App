@@ -25,6 +25,7 @@ import CourseDetailsScreen from '../screens/courses/CourseDetailsScreen';
 import CourseFormScreen from '../screens/courses/CourseFormScreen';
 import AssignmentsScreen from '../screens/assignments/AssignmentsScreen';
 import AssignmentDetailsScreen from '../screens/assignments/AssignmentDetailsScreen';
+import AssignmentFormScreen from '../screens/assignments/AssignmentFormScreen';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { COLORS, headerOptions } from '../theme';
@@ -64,6 +65,14 @@ function courseScreens(Stack) {
         component={AssignmentDetailsScreen}
         options={{ title: 'Assignment' }}
       />
+      <Stack.Screen
+        name="AssignmentForm"
+        component={AssignmentFormScreen}
+        options={({ route }) => ({
+          title: route.params?.assignment ? 'Edit assignment' : 'New assignment',
+          presentation: 'modal',
+        })}
+      />
     </>
   );
 }
@@ -98,11 +107,7 @@ function AssignmentsNavigator() {
         component={AssignmentsScreen}
         options={{ title: 'Assignments', headerLeft: () => <MenuButton /> }}
       />
-      <AssignmentsStack.Screen
-        name="AssignmentDetails"
-        component={AssignmentDetailsScreen}
-        options={{ title: 'Assignment' }}
-      />
+      {courseScreens(AssignmentsStack)}
     </AssignmentsStack.Navigator>
   );
 }

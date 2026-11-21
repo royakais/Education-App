@@ -13,6 +13,7 @@ import {
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 
+import './src/native/notifications'; // sets how notifications show while the app is open
 import { AuthProvider } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { navigationTheme, theme } from './src/theme';
