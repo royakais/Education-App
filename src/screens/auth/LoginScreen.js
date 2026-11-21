@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Avatar, Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
 import { COLORS, FONTS } from '../../theme';
+import { GradientButton } from '../../components/Gradient';
 import { authErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
@@ -80,9 +81,7 @@ export default function LoginScreen({ navigation }) {
         {error}
       </HelperText>
 
-      <Button mode="contained" onPress={handleLogin} loading={loading} disabled={loading}>
-        Log in
-      </Button>
+      <GradientButton title="Log in" icon="login" onPress={handleLogin} loading={loading} floating />
       <Button style={styles.link} onPress={() => navigation.navigate('Register')}>
         Don't have an account? Sign up
       </Button>

@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { addCourse, updateCourse } from '../../services/courses';
 import { COURSE_COLORS } from '../../data/defaultCourses';
 import { COLORS } from '../../theme';
+import { GradientButton } from '../../components/Gradient';
 
 export default function CourseFormScreen({ route, navigation }) {
   const { user } = useAuth();
@@ -79,16 +80,13 @@ export default function CourseFormScreen({ route, navigation }) {
         {error}
       </HelperText>
 
-      <Button
-        mode="contained"
+      <GradientButton
+        title={isEditing ? 'Save changes' : 'Add course'}
         icon={isEditing ? 'content-save-outline' : 'plus'}
         onPress={handleSave}
         loading={saving}
-        disabled={saving}
-        contentStyle={{ paddingVertical: 4 }}
-      >
-        {isEditing ? 'Save changes' : 'Add course'}
-      </Button>
+        floating
+      />
     </ScrollView>
   );
 }

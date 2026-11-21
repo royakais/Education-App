@@ -5,6 +5,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Icon, IconButton, Text } from 'react-native-paper';
 import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { COLORS, FONTS } from '../theme';
+import { GradientFill } from './Gradient';
 import {
   DAY_SHORT,
   MONTHS,
@@ -21,13 +22,14 @@ const TYPE_COLOR = { assignment: COLORS.burgundy, test: COLORS.caramel };
 
 function DayCell({ date, events, selected, today, dim, compact, onPress }) {
   const types = [...new Set(events.map((e) => e.type))];
+  // The selected day is filled with the app gradient.
+  const Box = selected ? GradientFill : View;
   return (
     <Pressable style={styles.cell} onPress={onPress}>
-      <View
+      <Box
         style={[
           compact ? styles.monthDay : styles.weekDay,
           today && !selected && styles.todayBorder,
-          selected && styles.selected,
         ]}
       >
         {!compact ? (
@@ -53,7 +55,7 @@ function DayCell({ date, events, selected, today, dim, compact, onPress }) {
             />
           ))}
         </View>
-      </View>
+      </Box>
     </Pressable>
   );
 }

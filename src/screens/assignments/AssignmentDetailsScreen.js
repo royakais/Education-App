@@ -21,6 +21,7 @@ import { scheduleDemoReminders, upcomingReminders } from '../../native/notificat
 import { shareAssignmentOnWhatsApp } from '../../native/share';
 import { tapFeedback, vibrateSubmitted } from '../../native/vibration';
 import SubmittedStamp from '../../components/SubmittedStamp';
+import { GradientButton } from '../../components/Gradient';
 import { COLORS, FONTS } from '../../theme';
 import { daysUntil, formatDayMonth, formatLong, relativeDay } from '../../utils/dates';
 
@@ -216,16 +217,14 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
           <Button mode="outlined" onPress={() => setDraft(null)} style={{ flex: 1 }} textColor={COLORS.maroon}>
             Cancel
           </Button>
-          <Button
-            mode="contained"
+          <GradientButton
+            title={submission ? 'Save' : 'Submit'}
             icon={submission ? 'content-save-outline' : 'upload'}
             onPress={submit}
             loading={busy === 'save'}
-            disabled={!draft.length || !!busy}
+            disabled={!draft.length || (!!busy && busy !== 'save')}
             style={{ flex: 1 }}
-          >
-            {submission ? 'Save' : 'Submit'}
-          </Button>
+          />
         </View>
       </Animated.View>
     );

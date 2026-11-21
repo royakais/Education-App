@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { COLORS, FONTS } from '../theme';
+import { GradientFill } from './Gradient';
 import { formatDayMonth } from '../utils/dates';
 import { generateCrn } from '../utils/crn';
 
@@ -113,8 +114,10 @@ function CourseInfo({ item, onOpen }) {
         {lecture ? lecture.title : 'No lectures yet'}
       </Text>
 
-      <Pressable style={styles.openBtn} onPress={onOpen} hitSlop={6}>
-        <Text style={styles.openText}>Open course →</Text>
+      <Pressable onPress={onOpen} hitSlop={6} style={styles.openWrap}>
+        <GradientFill style={styles.openBtn}>
+          <Text style={styles.openText}>Open course →</Text>
+        </GradientFill>
       </Pressable>
     </View>
   );
@@ -189,7 +192,11 @@ export default function CourseCarousel({ items, onOpenCourse, onIndexChange }) {
 
       <View style={styles.pager}>
         {items.map((item, i) => (
-          <View key={item.course.id} style={[styles.dot, i === safeIndex && styles.dotActive]} />
+          i === safeIndex ? (
+            <GradientFill key={item.course.id} style={[styles.dot, styles.dotActive]} />
+          ) : (
+            <View key={item.course.id} style={styles.dot} />
+          )
         ))}
       </View>
 
@@ -237,7 +244,7 @@ const styles = StyleSheet.create({
   crn: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.muted },
   pager: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 4 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#E0D1C4' },
-  dotActive: { width: 18, backgroundColor: COLORS.burgundy },
+  dotActive: { width: 18 },
   info: { alignItems: 'center', marginTop: 6, paddingVertical: 22, paddingHorizontal: 36 },
   courseName: { fontFamily: FONTS.regular, fontSize: 13, color: COLORS.muted, letterSpacing: 0.3 },
   label: {
@@ -249,14 +256,7 @@ const styles = StyleSheet.create({
   },
   value: { fontFamily: FONTS.medium, fontSize: 15, color: COLORS.text, marginTop: 2, textAlign: 'center' },
   sep: { width: 26, height: 1, backgroundColor: COLORS.creamDark, marginTop: 12 },
-  openBtn: {
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(129,23,27,0.18)',
-    backgroundColor: 'rgba(255,252,247,0.8)',
-  },
-  openText: { fontFamily: FONTS.semibold, fontSize: 12.5, color: COLORS.burgundy },
+  openWrap: { marginTop: 16, borderRadius: 20 },
+  openBtn: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 20 },
+  openText: { fontFamily: FONTS.semibold, fontSize: 12.5, color: COLORS.cream },
 });

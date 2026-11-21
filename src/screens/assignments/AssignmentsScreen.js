@@ -9,6 +9,7 @@ import { useCourses } from '../../hooks/useCourses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { createDefaultAssignmentsFor } from '../../services/assignments';
 import ScreenHeader from '../../components/ScreenHeader';
+import { Chip } from '../../components/Gradient';
 import { COLORS, FONTS } from '../../theme';
 import { daysUntil, formatDayMonth, relativeDay } from '../../utils/dates';
 
@@ -91,13 +92,7 @@ export default function AssignmentsScreen({ navigation }) {
               <ScreenHeader eyebrow={`${assignments.filter((a) => !a.submitted && courseById[a.courseId]).length} TO DO`} title="Assignments" />
               <View style={styles.filters}>
                 {FILTERS.map((f) => (
-                  <Pressable
-                    key={f.key}
-                    onPress={() => setFilter(f.key)}
-                    style={[styles.filter, filter === f.key && styles.filterOn]}
-                  >
-                    <Text style={[styles.filterText, filter === f.key && { color: COLORS.cream }]}>{f.label}</Text>
-                  </Pressable>
+                  <Chip key={f.key} label={f.label} active={filter === f.key} onPress={() => setFilter(f.key)} />
                 ))}
               </View>
             </View>

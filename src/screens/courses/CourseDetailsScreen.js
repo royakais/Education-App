@@ -8,6 +8,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import { useAssignments } from '../../hooks/useAssignments';
 import { COLORS, FONTS } from '../../theme';
+import { GradientFill } from '../../components/Gradient';
 import { generateCrn } from '../../utils/crn';
 import { daysUntil, formatShort, relativeDay } from '../../utils/dates';
 
@@ -119,10 +120,10 @@ export default function CourseDetailsScreen({ route, navigation }) {
                 {t.kind} · {formatShort(t.date)} · {relativeDay(t.date)}
               </Text>
             </View>
-            <View style={styles.practice}>
+            <GradientFill style={styles.practice}>
               <Icon source="play" size={14} color={COLORS.cream} />
               <Text style={styles.practiceText}>Practice</Text>
-            </View>
+            </GradientFill>
           </Pressable>
         ))}
       </Section>
@@ -166,6 +167,6 @@ const styles = StyleSheet.create({
   statusDone: { backgroundColor: '#E3EEDF' },
   statusPending: { backgroundColor: COLORS.goldLight },
   statusText: { fontSize: 12, fontFamily: FONTS.semibold },
-  practice: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.burgundy, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  practice: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
   practiceText: { fontFamily: FONTS.semibold, fontSize: 11.5, color: COLORS.cream },
 });

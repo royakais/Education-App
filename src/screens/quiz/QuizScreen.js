@@ -10,6 +10,7 @@ import { getQuizzes } from '../../data/quizzes';
 import { getItem } from '../../native/storage';
 import ScreenHeader from '../../components/ScreenHeader';
 import { COLORS, FONTS } from '../../theme';
+import { GradientFill } from '../../components/Gradient';
 import { daysUntil, formatDayMonth, relativeDay } from '../../utils/dates';
 
 export default function QuizScreen({ navigation }) {
@@ -51,10 +52,10 @@ export default function QuizScreen({ navigation }) {
               {score ? `  ·  Best ${score.score}/${score.total}` : ''}
             </Text>
           </View>
-          <View style={styles.practice}>
+          <GradientFill style={styles.practice}>
             <Icon source="play" size={16} color={COLORS.cream} />
             <Text style={styles.practiceText}>Practice</Text>
-          </View>
+          </GradientFill>
         </Pressable>
       </Animated.View>
     );
@@ -98,6 +99,6 @@ const styles = StyleSheet.create({
   code: { fontFamily: FONTS.semibold, fontSize: 11, letterSpacing: 1, color: COLORS.burgundy },
   title: { fontFamily: FONTS.medium, fontSize: 15, color: COLORS.text, marginTop: 1 },
   meta: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.muted, marginTop: 1 },
-  practice: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.burgundy, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14 },
+  practice: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14 },
   practiceText: { fontFamily: FONTS.semibold, fontSize: 12, color: COLORS.cream },
 });

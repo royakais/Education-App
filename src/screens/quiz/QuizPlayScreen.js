@@ -11,6 +11,7 @@ import { fetchQuestions } from '../../services/trivia';
 import { getItem, setItem } from '../../native/storage';
 import { COLORS, FONTS } from '../../theme';
 import { formatDayMonth } from '../../utils/dates';
+import { GradientButton } from '../../components/Gradient';
 
 const GREEN = '#2F6B3E';
 const RED = '#B3261E';
@@ -106,9 +107,7 @@ export default function QuizPlayScreen({ route, navigation }) {
         <View style={styles.section}>
           <Icon source="wifi-off" size={28} color={COLORS.burgundy} />
           <Text style={styles.errorText}>{error}</Text>
-          <Button mode="contained" icon="refresh" onPress={load}>
-            Try again
-          </Button>
+          <GradientButton title="Try again" icon="refresh" onPress={load} />
         </View>
       ) : !questions ? (
         <View style={[styles.section, { alignItems: 'center' }]}>
@@ -131,9 +130,7 @@ export default function QuizPlayScreen({ route, navigation }) {
             <Button mode="outlined" onPress={() => navigation.goBack()} style={{ flex: 1 }} textColor={COLORS.maroon}>
               Back
             </Button>
-            <Button mode="contained" icon="refresh" onPress={load} style={{ flex: 1 }}>
-              New questions
-            </Button>
+            <GradientButton title="New questions" icon="refresh" onPress={load} style={{ flex: 1 }} />
           </View>
         </Animated.View>
       ) : (
@@ -159,9 +156,12 @@ export default function QuizPlayScreen({ route, navigation }) {
           })}
           {picked ? (
             <Animated.View entering={FadeIn.duration(250)}>
-              <Button mode="contained" onPress={next} style={{ marginTop: 6 }} icon={index + 1 < questions.length ? 'arrow-right' : 'flag-checkered'}>
-                {index + 1 < questions.length ? 'Next question' : 'See my score'}
-              </Button>
+              <GradientButton
+                title={index + 1 < questions.length ? 'Next question' : 'See my score'}
+                icon={index + 1 < questions.length ? 'arrow-right' : 'flag-checkered'}
+                onPress={next}
+                style={{ marginTop: 6 }}
+              />
             </Animated.View>
           ) : null}
         </Animated.View>

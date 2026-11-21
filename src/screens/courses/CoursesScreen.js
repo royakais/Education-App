@@ -1,7 +1,7 @@
 // Courses tab — READ (live list) and DELETE, with buttons to CREATE and UPDATE.
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, FAB, Icon, IconButton, Menu, Portal, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, Icon, IconButton, Menu, Portal, Snackbar, Text } from 'react-native-paper';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useCourses } from '../../hooks/useCourses';
@@ -9,6 +9,7 @@ import { useAssignments } from '../../hooks/useAssignments';
 import { deleteCourse } from '../../services/courses';
 import { getCourseInfo } from '../../data/dummyCourseInfo';
 import ScreenHeader from '../../components/ScreenHeader';
+import { GradientButton } from '../../components/Gradient';
 import { COLORS, FONTS } from '../../theme';
 import { generateCrn } from '../../utils/crn';
 
@@ -110,7 +111,7 @@ export default function CoursesScreen({ navigation }) {
       />
 
       {/* CREATE */}
-      <FAB icon="plus" label="Add course" color={COLORS.cream} style={styles.fab} onPress={() => navigation.navigate('CourseForm')} />
+      <GradientButton title="Add course" icon="plus" floating style={styles.fab} onPress={() => navigation.navigate('CourseForm')} />
 
       {/* DELETE confirmation */}
       <Portal>
@@ -164,5 +165,5 @@ const styles = StyleSheet.create({
   emptyText: { fontFamily: FONTS.regular, color: COLORS.muted },
   dialogTitle: { textAlign: 'center', fontFamily: FONTS.semibold, color: COLORS.maroon },
   dialogText: { fontFamily: FONTS.regular, color: COLORS.text },
-  fab: { position: 'absolute', right: 18, bottom: 18, backgroundColor: COLORS.burgundy, borderRadius: 20 },
+  fab: { position: 'absolute', right: 18, bottom: 18 },
 });
